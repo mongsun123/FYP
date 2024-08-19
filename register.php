@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .login-container {
-            background-image: url('your-background-image.jpg');
+        /*    background-image: url('your-background-image.jpg'); */
             background-color: rgba(42, 42, 42, 0.8); /* Fallback color and slight overlay */
             background-blend-mode: overlay; /* Blend the color with the image */
             background-size: cover;
@@ -135,9 +135,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php endif; ?>
             <form class="login-form" method="POST" action="register.php">
                 <input type="text" name="username" placeholder="Username" class="login-input" required>
-                <input type="email" name="email" placeholder="Email" class="login-input" required>
+                <input type="email" id="email" name="email" placeholder="Email" class="login-input" required>
+                <!-- Container for OTP field and button -->
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <input type="text" name="otp_code" placeholder="Enter OTP" class="login-input" style="flex: 1; margin-right: 10px;" required>
+                    <button type="button" id="send-otp-button" class="login-button" style="width: auto; padding: 10px 15px;" disabled>Send OTP</button>
+                </div>
                 <input type="password" name="password" placeholder="Password" class="login-input" required>
                 <input type="password" name="confirm_password" placeholder="Confirm Password" class="login-input" required>
+                <!-- New field for the email authentication code -->
+                <!--<input type="text" name="otp_code" placeholder="Email OTP" class="login-input" required>-->
                 <button type="submit" class="login-button">Register</button>
             </form>
             <div class="login-links">
@@ -145,5 +152,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("222");
+            const emailInput = document.getElementById('email');
+            const sendOtpButton = document.getElementById('send-otp-button');
+            const otpStatus = document.getElementById('otp-status');
+
+            emailInput.addEventListener('input', function() {
+                if (emailInput.value.trim() !== '') {
+                    sendOtpButton.disabled = false;
+                } else {
+                    sendOtpButton.disabled = true;
+                }
+            });
+
+            sendOtpButton.addEventListener('click', function() {
+                const email = emailInput.value.trim();
+
+                // Send AJAX request to the server
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'send_otp.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            otpStatus.style.color = 'green';
+                            otpStatus.textContent = 'OTP sent successfully!';
+                        } else {
+                            otpStatus.style.color = 'red';
+                            otpStatus.textContent = 'Failed to send OTP. Please try again.';
+                        }
+                        otpStatus.style.display = 'block';
+                    }
+                };
+
+                xhr.onerror = function() {
+                    otpStatus.style.color = 'red';
+                    otpStatus.textContent = 'An error occurred. Please try again later.';
+                    otpStatus.style.display = 'block';
+                };
+
+                xhr.send(`email=${encodeURIComponent(email)}`);
+            });
+        });
+    </script>
 </body>
+</body>
+
 </html>
+
+
