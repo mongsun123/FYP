@@ -1,3 +1,41 @@
+<?php
+session_start();
+include('connection.php');
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // Prevent SQL Injection
+    $username = $conn->real_escape_string($username);
+
+    // Retrieve the user from the database
+    $sql = "SELECT * FROM user WHERE username = '$username'";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows == 1) {
+        $user = $result->fetch_assoc();
+        
+        // Verify the password
+        if (password_verify($password, $user['password_hash'])) {
+            // Password is correct, create a session
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            
+            // Redirect to the game or dashboard page
+            header("Location: index.php");
+            exit();
+        } else {
+            // Incorrect password
+            $error = "Invalid username or password!";
+        }
+    } else {
+        // User not found
+        $error = "Invalid username or password!";
+    }
+}
+?>
+
 <style>
 body, html {
     margin: 0;
@@ -74,16 +112,29 @@ body, html {
 }
 
 </style>
-<div class="login-container">
-    <div class="login-box">
-        <h1 class="game-title">Battle v1.0</h1>
-        <form class="login-form">
-            <input type="text" placeholder="Username" class="login-input">
-            <input type="password" placeholder="Password" class="login-input">
-            <button type="submit" class="login-button">Login</button>
-        </form>
-        <div class="login-links">
-            <a href="#">Forgot Password?</a> | <a href="#">Create Account</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        /* Reuse your existing CSS for styling */
+        <?php include 'styles.css'; ?>
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1 class="game-title">Battle v1.0</h1>
+            <form class="login-form" method="POST">
+                <input type="text" name="username" placeholder="Username" class="login-input">
+                <input type="password" name="password" placeholder="Password" class="login-input">
+                <button type="submit" class="login-button">Login</button>
+            </form>
+            <div class="login-links">
+                <a href="#">Forgot Password?</a> | <a href="register.php">Create Account</a>
+            </div>
         </div>
     </div>
-</div>
+</body>
