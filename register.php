@@ -1,7 +1,6 @@
 <?php
 session_start();
 include('connection.php');
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
@@ -24,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "Username or email already taken!";
         } else {
             // Hash the password
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             // Insert the new user into the database
             $stmt = $conn->prepare("INSERT INTO user (username, email, password_hash) VALUES (?, ?, ?)");
@@ -153,74 +152,70 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("222");
-            const emailInput = document.getElementById('email');
-            const sendOtpButton = document.getElementById('send-otp-button');
-            const otpStatus = document.getElementById('otp-status');
-
-            emailInput.addEventListener('input', function() {
-                if (emailInput.value.trim() !== '') {
-                    sendOtpButton.disabled = false;
-                } else {
-                    sendOtpButton.disabled = true;
-                }
-            });
-            sendOtpButton.addEventListener('click', function() {
-                const email = emailInput.value.trim();
-                
-                // Show the SweetAlert with a progress bar
-                Swal.fire({
-                    title: 'Sending OTP...',
-                    html: 'Please wait while we send your OTP.',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    },
-                    willClose: () => {
-                        Swal.hideLoading();
-                    }
-                });
-                // Send AJAX request to the server
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', 'send_otp.php', true);
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        const response = JSON.parse(xhr.responseText);
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Success',
-                                text: 'OTP sent successfully!',
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: response.message || 'Failed to send OTP. Please try again.',
-                            });
-                        }
-                    }
-                };
-            
-                xhr.onerror = function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'An error occurred. Please try again later.',
-                    });
-                };
-            
-                xhr.send(`email=${encodeURIComponent(email)}`);
-            });
-        });
-    </script>
+    
 </body>
-</body>
-
 </html>
 
-
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("222");
+        const emailInput = document.getElementById('email');
+        const sendOtpButton = document.getElementById('send-otp-button');
+        const otpStatus = document.getElementById('otp-status');
+        emailInput.addEventListener('input', function() {
+            if (emailInput.value.trim() !== '') {
+                sendOtpButton.disabled = false;
+            } else {
+                sendOtpButton.disabled = true;
+            }
+        });
+        sendOtpButton.addEventListener('click', function() {
+            const email = emailInput.value.trim();
+            
+            // Show the SweetAlert with a progress bar
+            Swal.fire({
+                title: 'Sending OTP...',
+                html: 'Please wait while we send your OTP.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                willClose: () => {
+                    Swal.hideLoading();
+                }
+            });
+            // Send AJAX request to the server
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'send_otp.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'OTP sent successfully!',
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'Failed to send OTP. Please try again.',
+                        });
+                    }
+                }
+            };
+        
+            xhr.onerror = function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred. Please try again later.',
+                });
+            };
+        
+            xhr.send(`email=${encodeURIComponent(email)}`);
+        });
+    });
+</script>
