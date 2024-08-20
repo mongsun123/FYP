@@ -152,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log("222");
@@ -166,10 +167,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     sendOtpButton.disabled = true;
                 }
             });
-
             sendOtpButton.addEventListener('click', function() {
                 const email = emailInput.value.trim();
-
+                
+                // Show the SweetAlert with a progress bar
+                Swal.fire({
+                    title: 'Sending OTP...',
+                    html: 'Please wait while we send your OTP.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                    willClose: () => {
+                        Swal.hideLoading();
+                    }
+                });
                 // Send AJAX request to the server
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', 'send_otp.php', true);
@@ -179,22 +191,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     if (xhr.status === 200) {
                         const response = JSON.parse(xhr.responseText);
                         if (response.success) {
-                            otpStatus.style.color = 'green';
-                            otpStatus.textContent = 'OTP sent successfully!';
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: 'OTP sent successfully!',
+                            });
                         } else {
-                            otpStatus.style.color = 'red';
-                            otpStatus.textContent = 'Failed to send OTP. Please try again.';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Failed to send OTP. Please try again.',
+                            });
                         }
-                        otpStatus.style.display = 'block';
                     }
                 };
-
+            
                 xhr.onerror = function() {
-                    otpStatus.style.color = 'red';
-                    otpStatus.textContent = 'An error occurred. Please try again later.';
-                    otpStatus.style.display = 'block';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred. Please try again later.',
+                    });
                 };
-
+            
                 xhr.send(`email=${encodeURIComponent(email)}`);
             });
         });
