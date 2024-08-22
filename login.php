@@ -34,6 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Invalid username or password!";
     }
 }
+
+// Display a timeout message if the session timed out
+if (isset($_GET['timeout']) && $_GET['timeout'] == 'true') {
+    echo "<p style='color:red;'>Your session has expired due to inactivity. Please log in again.</p>";
+}
+
 ?>
 
 <style>
