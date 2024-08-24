@@ -2,17 +2,24 @@
 session_start();
 include('connection.php');
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    //var_dump($_POST);
+    //var_dump($_SESSION);
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
+    $otp_input = $_POST['otp_code']; // OTP input from user
 
+    $otp_input = (string) $otp_input;
+    $session_otp = (string) $_SESSION['otp'];
     // Validate inputs
     if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = "All fields are required!";
     } elseif ($password !== $confirm_password) {
         $error = "Passwords do not match!";
-    } else {
+    } elseif ($otp_input !== $session_otp) {
+        $error = "Invalid OTP!";
+    }else {
         // Check if the username or email already exists
         $stmt = $conn->prepare("SELECT id FROM user WHERE username = ? OR email = ?");
         $stmt->bind_param("ss", $username, $email);
@@ -30,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("sss", $username, $email, $password_hash);
 
             if ($stmt->execute()) {
+                // Clear OTP from session after successful registration
+                unset($_SESSION['otp']);
                 $success = "Registration successful! You can now <a href='login.php'>login</a>.";
             } else {
                 $error = "Something went wrong. Please try again.";

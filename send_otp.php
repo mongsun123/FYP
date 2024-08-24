@@ -1,4 +1,6 @@
 <?php
+session_start();
+include('connection.php'); 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -15,7 +17,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Check if the email already exists in the database
+    $stmt = $conn->prepare("SELECT id FROM user WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
+    
+    if ($stmt->num_rows > 0) {
+        // If the email exists, return an error
+        echo json_encode(['success' => false, 'message' => 'Email already exists']);
+        exit;
+    }
+    
     $otp = mt_rand(100000, 999999);
+    $_SESSION['otp'] = $otp; // Store OTP in session
 
     $mail = new PHPMailer(true);
     try {

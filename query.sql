@@ -51,3 +51,15 @@ CREATE TABLE otp_verification (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE character_stats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    health INT DEFAULT 100,
+    attack_power INT DEFAULT 10,
+    defense INT DEFAULT 5,
+    level INT DEFAULT 1,
+    experience INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+DELETE FROM USER WHERE id = 2
