@@ -167,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log("222");
         const emailInput = document.getElementById('email');
         const sendOtpButton = document.getElementById('send-otp-button');
         const otpStatus = document.getElementById('otp-status');

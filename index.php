@@ -115,10 +115,41 @@ if (!isset($_SESSION['username'])) {
         animation: fade 1s ease-in-out infinite;
     }
 
+    .menu-title {
+        padding: 10px;
+        font-size: 1.5em;
+        text-align: center;
+        background-color: #333; /* You can change this to match your theme */
+        border-radius: 5px;
+        margin-bottom: 10px; /* Space between the title and the buttons */
+        box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.5);
+        text-shadow: 0px 0px 10px #ff6f00;
+    }
+
+    .menu-button {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+        color: #fff;
+        background-color: #444; /* Button background color */
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.5);
+    }
+
+    .menu-button:hover {
+        background-color: #555; /* Button hover effect */
+    }
+    
     @keyframes fade {
         0%, 100% { opacity: 0; }
         50% { opacity: 1; }
     }
+    
 </style>
 
 <div class="ui-container">
@@ -129,15 +160,15 @@ if (!isset($_SESSION['username'])) {
         </form>
     </div>
 
-    <div class="main-content" style="display: flex; flex: 1;">
+    <div class="main-content" style="display: flex; flex: 1; " >
         <div class="choice-layer">
-            <!-- Player choices go here -->
-            <button>Move to Forest</button>
-            <button>Attack Goblin</button>
-            <button>Talk to Merchant</button>
+            <div id="menu-title" class="menu-title">Main Menu</div>
+            <button class="menu-button" onclick="changeMenu('Battle')">Battle</button>
+            <button class="menu-button" onclick="changeMenu('User Stat')">User Stat</button>
+            <button class="menu-button" onclick="changeMenu('Inventory')">Inventory</button>
         </div>
-        
-        <div class="content-layer">
+
+        <div class="content-layer" id="content-layer">
             <!-- Main game content goes here -->
             <p>You enter the dark forest. The trees seem to whisper around you. A goblin appears in the clearing ahead.</p>
         </div>
@@ -158,6 +189,42 @@ if (!isset($_SESSION['username'])) {
 </div>
 
 <script>
+    function changeMenu(menuName) {
+        document.getElementById('menu-title').textContent = menuName;
+        // Change content based on the selected menu
+        let content = '';
+        if (menuName === 'Battle') {
+            content = '<p>You prepare your weapon and get ready to fight.</p>';
+        } else if (menuName === 'User Stat') {
+            menuTitle.textContent = menuName;
+            contentLayer.innerHTML = '<p>Your stats show your current level and abilities.</p>';
+
+            // Change User Stat button to Edit and Back buttons
+            document.getElementById('user-stat-button').style.display = 'none';
+            document.getElementById('battle-button').style.display = 'none';
+            document.getElementById('inventory-button').style.display = 'none';
+            
+            // Create Edit button
+            const editButton = document.createElement('button');
+            editButton.id = 'edit-button';
+            editButton.className = 'menu-button';
+            editButton.textContent = 'Edit';
+            editButton.onclick = function() { editStats(); };
+            document.querySelector('.choice-layer').appendChild(editButton);
+            
+            // Create Back button
+            const backButton = document.createElement('button');
+            backButton.id = 'back-button';
+            backButton.className = 'menu-button';
+            backButton.textContent = 'Back';
+            backButton.onclick = function() { backToMenu(); };
+            document.querySelector('.choice-layer').appendChild(backButton);
+
+        } else if (menuName === 'Inventory') {
+            content = '<p>You open your inventory and check your items.</p>';
+        }
+        document.getElementById('content-layer').innerHTML = content;
+    }
     const advices = [
         "Keep your password updated.",
         "Use strong, unique passwords.",
