@@ -196,30 +196,7 @@ if (!isset($_SESSION['username'])) {
         if (menuName === 'Battle') {
             content = '<p>You prepare your weapon and get ready to fight.</p>';
         } else if (menuName === 'User Stat') {
-            menuTitle.textContent = menuName;
-            contentLayer.innerHTML = '<p>Your stats show your current level and abilities.</p>';
-
-            // Change User Stat button to Edit and Back buttons
-            document.getElementById('user-stat-button').style.display = 'none';
-            document.getElementById('battle-button').style.display = 'none';
-            document.getElementById('inventory-button').style.display = 'none';
-            
-            // Create Edit button
-            const editButton = document.createElement('button');
-            editButton.id = 'edit-button';
-            editButton.className = 'menu-button';
-            editButton.textContent = 'Edit';
-            editButton.onclick = function() { editStats(); };
-            document.querySelector('.choice-layer').appendChild(editButton);
-            
-            // Create Back button
-            const backButton = document.createElement('button');
-            backButton.id = 'back-button';
-            backButton.className = 'menu-button';
-            backButton.textContent = 'Back';
-            backButton.onclick = function() { backToMenu(); };
-            document.querySelector('.choice-layer').appendChild(backButton);
-
+            content = '<p>Your stats show your current level and abilities.</p>';
         } else if (menuName === 'Inventory') {
             content = '<p>You open your inventory and check your items.</p>';
         }
