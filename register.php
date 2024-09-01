@@ -12,11 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $otp_input = (string) $otp_input;
     $session_otp = (string) $_SESSION['otp'];
+
+    // Password regex for at least 8 characters, one uppercase, one lowercase, one number, and one special character
+    $password_regex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/';
+
     // Validate inputs
     if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = "All fields are required!";
     } elseif ($password !== $confirm_password) {
         $error = "Passwords do not match!";
+    } elseif (!preg_match($password_regex, $password)) {
+        $error = "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.";
     } elseif ($otp_input !== $session_otp) {
         $error = "Invalid OTP!";
     }else {

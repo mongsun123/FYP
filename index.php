@@ -163,9 +163,22 @@ if (!isset($_SESSION['username'])) {
     <div class="main-content" style="display: flex; flex: 1; " >
         <div class="choice-layer">
             <div id="menu-title" class="menu-title">Main Menu</div>
-            <button class="menu-button" onclick="changeMenu('Battle')">Battle</button>
-            <button class="menu-button" onclick="changeMenu('User Stat')">User Stat</button>
-            <button class="menu-button" onclick="changeMenu('Inventory')">Inventory</button>
+            <button class="menu-button" id='battleBtn' onclick="changeMenu('Battle')">Battle</button>
+            <button class="menu-button" id='userStatBtn'onclick="changeMenu('User Stat')">User Stat</button>
+            <button class="menu-button" id='inventoryBtn'onclick="changeMenu('Inventory')">Inventory</button>
+            <!-- Battle -->
+            <button class="menu-button" id='easyBtn'onclick="changeMenu('Easy')" style="display: none;">Easy</button>
+            <button class="menu-button" id='mediumBtn'onclick="changeMenu('Medium')" style="display: none;">Medium</button>
+            <button class="menu-button" id='hardBtn'onclick="changeMenu('Hard')" style="display: none;">Hard</button>
+            <button class="menu-button" id='InsaneBtn'onclick="changeMenu('Insane')" style="display: none;">Insane</button>
+            
+            <button class="menu-button" id='attackBtn'onclick="changeMenu('Attack')" style="display: none;">Attack</button>
+            <button class="menu-button" id='defenseBtn'onclick="changeMenu('Defense')" style="display: none;">Defense</button>
+            <button class="menu-button" id='quitBtn'onclick="changeMenu('Back')" style="display: none;">Quit to Menu</button>
+            <!-- User Stat -->
+            <!-- Inventory -->
+            <button class="menu-button" id='sendItemBtn'onclick="changeMenu('Send Item')" style="display: none;">Send Item</button>
+            <button class="menu-button" id='backBtn'onclick="changeMenu('Back')" style="display: none;">Back</button>
         </div>
 
         <div class="content-layer" id="content-layer">
@@ -174,12 +187,10 @@ if (!isset($_SESSION['username'])) {
         </div>
         
         <div class="inventory-layer">
-            <!-- Player's inventory goes here -->
-            <ul>
-                <li>Sword (Equipped)</li>
-                <li>Health Potion (x2)</li>
-                <li>Magic Ring</li>
-            </ul>
+            <h2>Your Inventory</h2>
+            <ul id="inventory-list">
+                <!-- Inventory items will be inserted here by JavaScript -->
+            </ul>   
         </div>
     </div>
 
@@ -189,18 +200,222 @@ if (!isset($_SESSION['username'])) {
 </div>
 
 <script>
+    let easyMaxHp = 100;
+    let easyhp = easyMaxHp;
+    let easyattack = 5;
+    let easydefense = 5;
+
+    let mediumMaxHp = 150;
+    let mediumhp = mediumMaxHp;
+    let mediumattack = 10;
+    let mediumdefense = 10;
+
+    let hardMaxHp = 200;
+    let hardhp = hardMaxHp;
+    let hardattack = 15;
+    let harddefense = 15;
+
+    let insaneMaxHp = 300;
+    let insanehp = insaneMaxHp;
+    let insaneattack = 25;
+    let insanedefense = 25;
+
+    let enemyMaxHp;  // Maximum HP for easy level enemy
+    let enemyHp;  // Current HP for easy level enemy
+    let enemyAttack;
+    let enemyDefense;
+    
+    let playerMaxHp = 100;  // Maximum HP for the player
+    let playerHp = playerMaxHp;  // Current HP for the player
+    let level = 5;
+    let attack = 10;
+    let defense = 10;
+    let exp = 5;
+    let expRequired = 100;
+
     function changeMenu(menuName) {
-        document.getElementById('menu-title').textContent = menuName;
+
+        console.log(easyhp);
+        
         // Change content based on the selected menu
         let content = '';
         if (menuName === 'Battle') {
+            document.getElementById('menu-title').textContent = menuName;
+            document.getElementById('battleBtn').style.display = 'none';
+            document.getElementById('userStatBtn').style.display = 'none';
+            document.getElementById('inventoryBtn').style.display = 'none';
+            
+            document.getElementById('easyBtn').style.display = '';
+            document.getElementById('mediumBtn').style.display = '';
+            document.getElementById('hardBtn').style.display = '';
+            document.getElementById('InsaneBtn').style.display = '';
+            document.getElementById('backBtn').style.display = '';
             content = '<p>You prepare your weapon and get ready to fight.</p>';
         } else if (menuName === 'User Stat') {
-            content = '<p>Your stats show your current level and abilities.</p>';
+            document.getElementById('menu-title').textContent = menuName;
+            content = `<p>Your stats show your current level and abilities.</p>
+                        <p>Level: ${level}</p>
+                        <p>HP: ${hp}</p>
+                        <p>Attack: ${attack}</p>
+                        <p>Defense: ${defense}</p>
+                        <p>Exp: ${exp} / ${expreqired}</p>`;
         } else if (menuName === 'Inventory') {
+            document.getElementById('menu-title').textContent = menuName;
+            document.getElementById('battleBtn').style.display = 'none';
+            document.getElementById('userStatBtn').style.display = 'none';
+            document.getElementById('inventoryBtn').style.display = 'none';
+            
+            document.getElementById('sendItemBtn').style.display = '';
+            document.getElementById('backBtn').style.display = '';
             content = '<p>You open your inventory and check your items.</p>';
+        } else if (menuName === 'Easy') {
+            document.getElementById('menu-title').textContent = menuName;   
+
+            enemyMaxHp = 100;
+            enemyHp = enemyMaxHp;
+            enemyAttack = 15;
+            enemyDefense = 5;
+
+            // Hide difficulty buttons and show action buttons
+            battleUi();
+
+            content = '<p>Enemy HP: ' + enemyHp + '</p>' +
+                      '<p>Enemy Attack Power: ' + enemyAttack + '</p>' +
+                      '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
+                      '<p>Your HP: ' + playerHp + '</p>' +
+                      '<p>Your Attack Power: ' + attack + '</p>' +
+                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Choose your action:</p>'
+            //content = '<p>Your stats show your current level and abilities.</p>';
+        } else if (menuName === 'Medium') {
+            document.getElementById('menu-title').textContent = menuName;
+            
+            enemyMaxHp = 150;
+            enemyHp = enemyMaxHp;
+            enemyAttack = 25;
+            enemyDefense = 10;
+
+            battleUi();
+
+            content = '<p>Enemy HP: ' + enemyHp + '</p>' +
+                      '<p>Enemy Attack Power: ' + enemyAttack + '</p>' +
+                      '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
+                      '<p>Your HP: ' + playerHp + '</p>' +
+                      '<p>Your Attack Power: ' + attack + '</p>' +
+                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Choose your action:</p>'
+        } else if (menuName === 'Hard') {
+            document.getElementById('menu-title').textContent = menuName;
+            
+            enemyMaxHp = 200;
+            enemyHp = enemyMaxHp;
+            enemyAttack = 40;
+            enemyDefense = 15;
+
+            battleUi();
+
+            content = '<p>Enemy HP: ' + enemyHp + '</p>' +
+                      '<p>Enemy Attack Power: ' + enemyAttack + '</p>' +
+                      '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
+                      '<p>Your HP: ' + playerHp + '</p>' +
+                      '<p>Your Attack Power: ' + attack + '</p>' +
+                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Choose your action:</p>'
+        } else if (menuName === 'Insane') {
+            document.getElementById('menu-title').textContent = menuName;
+            
+            enemyMaxHp = 300;
+            enemyHp = enemyMaxHp;
+            enemyAttack = 60;
+            enemyDefense = 40;
+
+            battleUi();
+
+            content = '<p>Enemy HP: ' + enemyHp + '</p>' +
+                      '<p>Enemy Attack Power: ' + enemyAttack + '</p>' +
+                      '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
+                      '<p>Your HP: ' + playerHp + '</p>' +
+                      '<p>Your Attack Power: ' + attack + '</p>' +
+                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Choose your action:</p>'
+        } else if (menuName === 'Send Item') {
+            document.getElementById('menu-title').textContent = menuName;
+            content = '<p>Your stats show your current level and abilities.</p>';
+        } else if (menuName === 'Back') {
+            resetStats();
+
+            document.getElementById('battleBtn').style.display = '';
+            document.getElementById('userStatBtn').style.display = '';
+            document.getElementById('inventoryBtn').style.display = '';
+            
+            document.getElementById('easyBtn').style.display = 'none';
+            document.getElementById('mediumBtn').style.display = 'none';
+            document.getElementById('hardBtn').style.display = 'none';
+            document.getElementById('InsaneBtn').style.display = 'none';
+            document.getElementById('attackBtn').style.display = 'none';
+            document.getElementById('defenseBtn').style.display = 'none';
+            document.getElementById('quitBtn').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'none';
+            document.getElementById('sendItemBtn').style.display = 'none';
+            
+            content = '<p>Your stats show your current level and abilities.</p>';
+            document.getElementById('menu-title').textContent = 'Main Menu';
+        }else if (menuName === 'Attack') {
+            // Player attacks
+            let damageToEnemy = attack - enemyDefense;
+            if (damageToEnemy < 0) damageToEnemy = 0;
+            enemyHp -= damageToEnemy;
+
+            content = '<p>You attacked the enemy!</p>' +
+                      '<p>Enemy HP remaining: ' + enemyHp + '</p>';
+            
+            // Check if enemy is defeated
+            if (enemyHp <= 0) {
+                content += '<p>You defeated the enemy!</p>';
+                document.getElementById('attackBtn').style.display = 'none';
+                document.getElementById('defenseBtn').style.display = 'none';
+            } else {
+                // Enemy's turn to attack
+                let missChance = Math.random();
+                if (missChance > 0.1) {  // 90% chance to hit
+                    let damageToPlayer = enemyAttack - defense;
+                    if (damageToPlayer < 0) damageToPlayer = 0;
+                    playerHp -= damageToPlayer;
+
+                    content += '<p>The enemy attacks you!</p>' +
+                               '<p>Your HP remaining: ' + playerHp + '</p>';
+                } else {
+                    content += '<p>The enemy missed their attack!</p>';
+                }
+
+                // Check if the player is defeated
+                if (playerHp <= 0) {
+                    content += '<p>You were defeated by the enemy!</p>';
+                    document.getElementById('attackBtn').style.display = 'none';
+                    document.getElementById('defenseBtn').style.display = 'none';
+                }
+            }
+        }else if (menuName === 'Defense') {
+            content = '<p>You prepare to defend!</p>';
         }
         document.getElementById('content-layer').innerHTML = content;
+    }
+
+    function resetStats() {
+        playerHp = playerMaxHp;
+        enemyHp = enemyMaxHp;
+    }
+
+    function battleUi(){
+        document.getElementById('easyBtn').style.display = 'none';
+        document.getElementById('mediumBtn').style.display = 'none';
+        document.getElementById('hardBtn').style.display = 'none';
+        document.getElementById('InsaneBtn').style.display = 'none';
+        document.getElementById('backBtn').style.display = 'none';
+
+        document.getElementById('attackBtn').style.display = '';
+        document.getElementById('defenseBtn').style.display = '';
+        document.getElementById('quitBtn').style.display = '';
     }
     const advices = [
         "Keep your password updated.",
@@ -219,4 +434,23 @@ if (!isset($_SESSION['username'])) {
     // Show the first advice and then rotate every 10 seconds
     showNextAdvice();
     setInterval(showNextAdvice, 10000);
+
+    function loadInventory() {
+        fetch('get_inventory.php')
+            .then(response => response.json())
+            .then(data => {
+                const inventoryList = document.getElementById('inventory-list');
+                inventoryList.innerHTML = ''; // Clear the list
+            
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = `${item.item_name} (x${item.quantity})`;
+                    inventoryList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error fetching inventory:', error));
+    }
+    
+    // Call this function when the inventory menu is opened
+    loadInventory();
 </script>
