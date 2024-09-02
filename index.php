@@ -3,7 +3,6 @@ session_start();
 
 // Set session timeout duration (in seconds)
 $timeout_duration = 600; // 10 minutes
-
 // Check if the "last_activity" session variable is set
 if (isset($_SESSION['last_activity'])) {
     // Calculate the session's lifetime
@@ -173,7 +172,7 @@ if (!isset($_SESSION['username'])) {
             <button class="menu-button" id='InsaneBtn'onclick="changeMenu('Insane')" style="display: none;">Insane</button>
             
             <button class="menu-button" id='attackBtn'onclick="changeMenu('Attack')" style="display: none;">Attack</button>
-            <button class="menu-button" id='defenseBtn'onclick="changeMenu('Defense')" style="display: none;">Defense</button>
+            <button class="menu-button" id='useItemBtn'onclick="changeMenu('Use Item')" style="display: none;">Use Item</button>
             <button class="menu-button" id='quitBtn'onclick="changeMenu('Back')" style="display: none;">Quit to Menu</button>
             <!-- User Stat -->
             <!-- Inventory -->
@@ -200,6 +199,7 @@ if (!isset($_SESSION['username'])) {
 </div>
 
 <script>
+    const playerId = <?php echo json_encode($_SESSION['user_id']); ?>;
     let easyMaxHp = 100;
     let easyhp = easyMaxHp;
     let easyattack = 5;
@@ -234,9 +234,6 @@ if (!isset($_SESSION['username'])) {
     let expRequired = 100;
 
     function changeMenu(menuName) {
-
-        console.log(easyhp);
-        
         // Change content based on the selected menu
         let content = '';
         if (menuName === 'Battle') {
@@ -255,10 +252,10 @@ if (!isset($_SESSION['username'])) {
             document.getElementById('menu-title').textContent = menuName;
             content = `<p>Your stats show your current level and abilities.</p>
                         <p>Level: ${level}</p>
-                        <p>HP: ${hp}</p>
+                        <p>HP: ${playerMaxHp}</p>
                         <p>Attack: ${attack}</p>
                         <p>Defense: ${defense}</p>
-                        <p>Exp: ${exp} / ${expreqired}</p>`;
+                        <p>Exp: ${exp} / ${expRequired}</p>`;
         } else if (menuName === 'Inventory') {
             document.getElementById('menu-title').textContent = menuName;
             document.getElementById('battleBtn').style.display = 'none';
@@ -353,14 +350,20 @@ if (!isset($_SESSION['username'])) {
             document.getElementById('hardBtn').style.display = 'none';
             document.getElementById('InsaneBtn').style.display = 'none';
             document.getElementById('attackBtn').style.display = 'none';
-            document.getElementById('defenseBtn').style.display = 'none';
+            document.getElementById('useItemBtn').style.display = 'none';
             document.getElementById('quitBtn').style.display = 'none';
             document.getElementById('backBtn').style.display = 'none';
             document.getElementById('sendItemBtn').style.display = 'none';
             
-            content = '<p>Your stats show your current level and abilities.</p>';
+            content = '<p>Back to Main Menu.</p>';
             document.getElementById('menu-title').textContent = 'Main Menu';
         }else if (menuName === 'Attack') {
+            // Get player's level (this could be stored in a variable or retrieved from the database/session)
+            let playerLevel = 2; // Example level, replace with actual level retrieval logic
+
+            // Get items for the current level
+            const itemsForLevel = getAllItemsByLevel(playerLevel);
+
             // Player attacks
             let damageToEnemy = attack - enemyDefense;
             if (damageToEnemy < 0) damageToEnemy = 0;
@@ -373,7 +376,14 @@ if (!isset($_SESSION['username'])) {
             if (enemyHp <= 0) {
                 content += '<p>You defeated the enemy!</p>';
                 document.getElementById('attackBtn').style.display = 'none';
-                document.getElementById('defenseBtn').style.display = 'none';
+                document.getElementById('useItemBtn').style.display = 'none';
+
+                const selectedItem = getRandomItem(itemsForLevel);
+                // Assign items to player based on the level
+                content += '<p>You found the following item:</p>';
+                content += `<p>Item: ${selectedItem}</p>`;
+
+                addItemToInventory(playerId, selectedItem);
             } else {
                 // Enemy's turn to attack
                 let missChance = Math.random();
@@ -392,7 +402,7 @@ if (!isset($_SESSION['username'])) {
                 if (playerHp <= 0) {
                     content += '<p>You were defeated by the enemy!</p>';
                     document.getElementById('attackBtn').style.display = 'none';
-                    document.getElementById('defenseBtn').style.display = 'none';
+                    document.getElementById('useItemBtn').style.display = 'none';
                 }
             }
         }else if (menuName === 'Defense') {
@@ -406,6 +416,31 @@ if (!isset($_SESSION['username'])) {
         enemyHp = enemyMaxHp;
     }
 
+    function getRandomItem(items) {
+        return items[Math.floor(Math.random() * items.length)];
+    }
+    function addItemToInventory(playerId, itemName) {
+        // Example: Use AJAX to send data to a PHP script for inserting into the database
+        fetch('add_item_to_inventory.php', {
+            method: 'POST',
+            body: JSON.stringify({ playerId, itemName }),
+            headers: { 'Content-Type': 'application/json' }
+        }).then(response => response.json())
+          .then(data => console.log(data.message))
+          .catch(error => console.error('Error:', error));
+    }
+    // Function to get items based on level
+    function getAllItemsByLevel(level) {
+        const items = {
+            1: ["Wooden Sword", "Iron Sword", "Leather Armor", "Iron Armor", "Health Potion", "Attack Potion", "Defense Potion"],
+            2: ["Steel Sword", "Golden Sword", "Chain Mail", "Steel Armor", "Greater Health Potion", "Greater Attack Potion", "Greater Defense Potion"],
+            3: ["Dragon Sword", "Magic Sword", "Dragon Mail", "Magic Armor", "Superior Health Potion", "Superior Attack Potion", "Superior Defense Potion"],
+            4: ["Excalibur", "Holy Sword", "Holy Armor", "Dragon Scale Armor", "Ultimate Health Potion", "Ultimate Attack Potion", "Ultimate Defense Potion"]
+        };
+
+        return items[level] || []; // Return items for the given level or an empty array if level is not matched
+    }
+
     function battleUi(){
         document.getElementById('easyBtn').style.display = 'none';
         document.getElementById('mediumBtn').style.display = 'none';
@@ -414,7 +449,7 @@ if (!isset($_SESSION['username'])) {
         document.getElementById('backBtn').style.display = 'none';
 
         document.getElementById('attackBtn').style.display = '';
-        document.getElementById('defenseBtn').style.display = '';
+        document.getElementById('useItemBtn').style.display = '';
         document.getElementById('quitBtn').style.display = '';
     }
     const advices = [
@@ -447,7 +482,7 @@ if (!isset($_SESSION['username'])) {
                     li.textContent = `${item.item_name} (x${item.quantity})`;
                     inventoryList.appendChild(li);
                 });
-            })
+            })  
             .catch(error => console.error('Error fetching inventory:', error));
     }
     
