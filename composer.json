@@ -1,0 +1,9 @@
+{
+    "require": {
+        "phpgangsta/googleauthenticator": "dev-master",
+        "sonata-project/google-authenticator": "^2.3",
+        "robthree/twofactorauth": "^3.0"
+    },
+    "minimum-stability": "dev", 
+    "prefer-stable": true
+}

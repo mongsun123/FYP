@@ -1,14 +1,24 @@
 <?php
+date_default_timezone_set('Asia/Singapore');  // Or your specific timezone
 session_start();
 include('connection.php');
+require 'vendor/autoload.php';
+
+use Sonata\GoogleAuthenticator\GoogleAuthenticator;
+use Sonata\GoogleAuthenticator\GoogleQrUrl;
+
+$ga = new GoogleAuthenticator();
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     //var_dump($_POST);
     //var_dump($_SESSION);
+    
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $otp_input = $_POST['otp_code']; // OTP input from user
+    $totp_code_input = $_POST['totp_code']; // TOTP input from user
 
     $otp_input = (string) $otp_input;
     $session_otp = (string) $_SESSION['otp'];
@@ -25,6 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.";
     } elseif ($otp_input !== $session_otp) {
         $error = "Invalid OTP!";
+    }elseif (!isset($_SESSION['otp_secret'])) {
+        $error = "OTP Secret not set in session.";
+    }elseif (!$ga->checkCode($_SESSION['otp_secret'], $totp_code_input)) {
+        $error = "Invalid TOTP!";
     }else {
         // Check if the username or email already exists
         $stmt = $conn->prepare("SELECT id FROM user WHERE username = ? OR email = ?");
@@ -36,16 +50,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "Username or email already taken!";
         } else {
             // Hash the password
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             // Insert the new user into the database
-            $stmt = $conn->prepare("INSERT INTO user (username, email, password_hash) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $username, $email, $password_hash);
+            $stmt = $conn->prepare("INSERT INTO user (username, email, password_hash, otp_secret) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $username, $email, $password_hash, $_SESSION['otp_secret']);
 
             if ($stmt->execute()) {
                 // Clear OTP from session after successful registration
+                unset($_SESSION['otp_secret']);
                 unset($_SESSION['otp']);
                 $success = "Registration successful! You can now <a href='login.php'>login</a>.";
+                $redirect = true; // Flag to indicate redirection
             } else {
                 $error = "Something went wrong. Please try again.";
             }
@@ -53,6 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $stmt->close();
     }
+}else {
+    // Generate a unique secret for the registration form
+    $secret = $ga->generateSecret();
+    $_SESSION['otp_secret'] = $secret;
+    $user = 'Untitled'; // Replace this with the actual username or any unique identifier
+    $qrCodeUrl = GoogleQrUrl::generate($user, $secret, 'Battle v0.1');
+    
 }
 ?>
 
@@ -146,6 +169,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p style="color: red;"><?= $error ?></p>
             <?php elseif (isset($success)): ?>
                 <p style="color: green;"><?= $success ?></p>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Registration Successful',
+                            text: 'You can now log in!',
+                            timer: 3000, // Show for 3 seconds
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = 'login.php'; // Redirect to login page
+                        });
+                    });
+                </script>
             <?php endif; ?>
             <form class="login-form" method="POST" action="register.php">
                 <input type="text" name="username" placeholder="Username" class="login-input" required>
@@ -157,10 +193,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <input type="password" name="password" placeholder="Password" class="login-input" required>
                 <input type="password" name="confirm_password" placeholder="Confirm Password" class="login-input" required>
-                <!-- New field for the email authentication code -->
-                <!--<input type="text" name="otp_code" placeholder="Email OTP" class="login-input" required>-->
+                <input type="text" name="totp_code" placeholder="Enter TOTP" class="login-input" required>
                 <button type="submit" class="login-button">Register</button>
             </form>
+            <div class="qr-code">
+                <h2>Scan this QR Code with your Authenticator app:</h2>
+                <img src="<?php echo $qrCodeUrl; ?>" alt="QR Code">
+                <p>Secret Key: <strong><?php echo $secret; ?></strong></p>
+            </div>
             <div class="login-links">
                 <a href="login.php">Already have an account? Login here</a>
             </div>

@@ -12,6 +12,9 @@ CREATE TABLE user (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE user
+ADD COLUMN otp_secret VARCHAR(100); 
+
 CREATE TABLE item (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_name VARCHAR(100) NOT NULL,
@@ -108,7 +111,7 @@ VALUES
     ('Ultimate Attack Potion', 'Increases attack by 25.', 'potion', 150, '25'),
     ('Ultimate Defense Potion', 'Increases defense by 25.', 'potion', 150, '25');
     
-select * from inventory;
+select * from user;
 
 INSERT INTO inventory (user_id, item_id, quantity)
 VALUES 

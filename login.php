@@ -1,10 +1,13 @@
 <?php
 session_start();
 include('connection.php');
+require 'vendor/autoload.php';
 
+use Sonata\GoogleAuthenticator\GoogleAuthenticator;
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
+    $totp_code_input = $_POST['totp_code']; // TOTP input from user
 
     // Prevent SQL Injection
     $username = $conn->real_escape_string($username);
@@ -18,13 +21,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Verify the password
         if (password_verify($password, $user['password_hash'])) {
-            // Password is correct, create a session
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            
-            // Redirect to the game or dashboard page
-            header("Location: index.php");
-            exit();
+            $ga = new GoogleAuthenticator();
+            $secret = $user['otp_secret'];
+            echo $ga->getCode($secret);
+
+            // Verify the TOTP code
+            if ($ga->checkCode($secret, $totp_code_input)) {
+                // Password and TOTP code are correct, create a session
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                
+                // Redirect to the game or dashboard page
+                header("Location: index.php");
+                exit();
+            } else {
+                // Incorrect TOTP code
+                $error = "Invalid TOTP code!";
+            }
         } else {
             // Incorrect password
             $error = "Invalid username or password!";
@@ -53,7 +66,6 @@ body, html {
 }
 
 .login-container {
-    background-image: url('your-background-image.jpg');
     background-color: rgba(42, 42, 42, 0.8); /* Fallback color and slight overlay */
     background-blend-mode: overlay; /* Blend the color with the image */
     background-size: cover;
@@ -117,6 +129,9 @@ body, html {
     text-decoration: underline;
 }
 
+.error-message {
+    color: red;
+}
 </style>
 <!DOCTYPE html>
 <html lang="en">
@@ -130,8 +145,12 @@ body, html {
         <div class="login-box">
             <h1 class="game-title">Battle v0.1</h1>
             <form class="login-form" method="POST">
+                <?php if (isset($error)): ?>
+                    <p class="error-message"><?= $error ?></p>
+                <?php endif; ?>
                 <input type="text" name="username" placeholder="Username" class="login-input">
                 <input type="password" name="password" placeholder="Password" class="login-input">
+                <input type="text" name="totp_code" placeholder="Enter TOTP" class="login-input">
                 <button type="submit" class="login-button">Login</button>
             </form>
             <div class="login-links">
