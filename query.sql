@@ -117,4 +117,4 @@ INSERT INTO inventory (user_id, item_id, quantity)
 VALUES 
     ('2', '4', 1),
     ('1', '30', 1),
-    ('1', '24', 1)
+    ('1', '24', 1);
