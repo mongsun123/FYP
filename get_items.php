@@ -14,17 +14,13 @@ $user_id = $user['id']; // Fetch the user ID
 $stmt->close(); // Close the statement
 
 // Securely fetch inventory items for the user
-$stmt = $conn->prepare("SELECT i.item_name, i.item_description, i.item_type, i.item_value, i.item_effect, inv.quantity, 
-                        CASE 
-                            WHEN i.id BETWEEN 1 AND 7 THEN 1 
-                            WHEN i.id BETWEEN 8 AND 14 THEN 2 
-                            WHEN i.id BETWEEN 15 AND 21 THEN 3 
-                            WHEN i.id BETWEEN 22 AND 28 THEN 4 
-                            ELSE 0 -- For items outside the specified range
-                        END AS item_level
-                        FROM inventory inv
-                        JOIN item i ON inv.item_id = i.id
-                        WHERE inv.user_id = ?");
+$stmt = $conn->prepare("
+    SELECT i.id, i.item_name, i.item_description, i.item_type, i.item_value, i.item_effect, inv.quantity
+    FROM inventory inv
+    JOIN item i ON inv.item_id = i.id
+    WHERE inv.user_id = ?
+    ORDER BY i.item_name
+");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();

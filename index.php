@@ -1,5 +1,6 @@
 <?php
 session_start();
+$userId = $_SESSION['user_id'];
 
 // Set session timeout duration (in seconds)
 $timeout_duration = 600; // 10 minutes
@@ -26,6 +27,7 @@ if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
+
 ?>
 
 <style>
@@ -144,6 +146,19 @@ if (!isset($_SESSION['username'])) {
         background-color: #555; /* Button hover effect */
     }
     
+    .inventory-table {
+        width: 100%;
+        max-width: 100%; /* Set a maximum width for all tables */
+        margin-bottom: 20px;
+        border-collapse: collapse;
+    }
+
+    .inventory-table th, .inventory-table td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #ddd;
+    }
+
     @keyframes fade {
         0%, 100% { opacity: 0; }
         50% { opacity: 1; }
@@ -152,6 +167,7 @@ if (!isset($_SESSION['username'])) {
 </style>
 
 <div class="ui-container">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <div class="top-section">
         <div class="welcome-message">Welcome back, <?php echo $_SESSION['username']; ?>!</div>
         <form action="logout.php" method="post">
@@ -265,6 +281,59 @@ if (!isset($_SESSION['username'])) {
             document.getElementById('sendItemBtn').style.display = '';
             document.getElementById('backBtn').style.display = '';
             content = '<p>You open your inventory and check your items.</p>';
+
+            // Fetch inventory data from the server
+            fetch('get_inventory.php')
+            .then(response => response.json())
+            .then(data => {
+                let content = '<h2>Your Inventory</h2>';
+                let levels = {1: [], 2: [], 3: [], 4: []}; // To categorize items by levels
+            
+                // Categorize items by level
+                data.forEach(item => {
+                    if (levels[item.item_level]) {
+                        levels[item.item_level].push(item);
+                    }
+                });
+            
+                // Construct the HTML content as a table
+                for (let level in levels) {
+                    if (levels[level].length > 0) {
+                        content += `<h3>Level ${level} Items</h3>`;
+                        content += `<table class="inventory-table">
+                                      <thead>
+                                        <tr>
+                                          <th style="width: 20%;">Item Name</th>
+                                          <th style="width: 40%;">Description</th>
+                                          <th style="width: 10%;">Type</th>
+                                          <th style="width: 10%;">Value</th>
+                                          <th style="width: 10%;">Effect</th>
+                                          <th style="width: 10%;">Quantity</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>`;
+                    
+                        // Add rows for each item in the level
+                        levels[level].forEach(item => {
+                            content += `<tr>
+                                          <td style="width: 20%;">${item.item_name}</td>
+                                          <td style="width: 40%;">${item.item_description}</td>
+                                          <td style="width: 10%;">${item.item_type}</td>
+                                          <td style="width: 10%;">${item.item_value}</td>
+                                          <td style="width: 10%;">${item.item_effect}</td>
+                                          <td style="width: 10%;">${item.quantity}</td>
+                                        </tr>`;
+                        });
+                    
+                        content += `</tbody></table>`;
+                    }
+                }
+            
+                document.getElementById('content-layer').innerHTML = content; // Display the content as a table
+            })
+            .catch(error => {
+                console.error('Error fetching inventory data:', error);
+            });
         } else if (menuName === 'Easy') {
             document.getElementById('menu-title').textContent = menuName;   
 
@@ -337,7 +406,21 @@ if (!isset($_SESSION['username'])) {
                       '<p>Choose your action:</p>'
         } else if (menuName === 'Send Item') {
             document.getElementById('menu-title').textContent = menuName;
-            content = '<p>Your stats show your current level and abilities.</p>';
+            content = `
+                <p>Search for a user to send an item to:</p>
+                <input type="text" id="search-input" placeholder="Enter username or user ID">
+                <button onclick="searchUser()">Search</button>
+                <div id="search-results"></div>
+                <div id="send-item-form" style="display:none;">
+                    <h3>Send Item</h3>
+                    <input type="hidden" id="selected-user-id">
+                    <label for="item-select">Choose an item to send:</label>
+                    <select id="item-select"></select>
+                    <button onclick="sendItem()">Send Item</button>
+                </div>
+            `;
+
+            document.getElementById('content-layer').innerHTML = content;
         } else if (menuName === 'Back') {
             resetStats();
 
@@ -359,7 +442,17 @@ if (!isset($_SESSION['username'])) {
             document.getElementById('menu-title').textContent = 'Main Menu';
         }else if (menuName === 'Attack') {
             // Get player's level (this could be stored in a variable or retrieved from the database/session)
-            let playerLevel = 2; // Example level, replace with actual level retrieval logic
+            let playerLevel;
+            console.log(enemyMaxHp);
+            if(enemyMaxHp == 100){
+                playerLevel = 1; // Example level, replace with actual level retrieval logic
+            }else if(enemyMaxHp == 150){
+                playerLevel = 2;
+            }else if(enemyMaxHp == 200){
+                playerLevel = 3;
+            }else if(enemyMaxHp == 300){
+                playerLevel = 4;
+            }
 
             // Get items for the current level
             const itemsForLevel = getAllItemsByLevel(playerLevel);
@@ -384,6 +477,7 @@ if (!isset($_SESSION['username'])) {
                 content += `<p>Item: ${selectedItem}</p>`;
 
                 addItemToInventory(playerId, selectedItem);
+                loadInventory();
             } else {
                 // Enemy's turn to attack
                 let missChance = Math.random();
@@ -419,6 +513,7 @@ if (!isset($_SESSION['username'])) {
     function getRandomItem(items) {
         return items[Math.floor(Math.random() * items.length)];
     }
+
     function addItemToInventory(playerId, itemName) {
         // Example: Use AJAX to send data to a PHP script for inserting into the database
         fetch('add_item_to_inventory.php', {
@@ -426,9 +521,24 @@ if (!isset($_SESSION['username'])) {
             body: JSON.stringify({ playerId, itemName }),
             headers: { 'Content-Type': 'application/json' }
         }).then(response => response.json())
-          .then(data => console.log(data.message))
-          .catch(error => console.error('Error:', error));
+        .then(data => {
+            console.log(data.message);
+            
+            // After successfully adding the item to the database, update the inventory in the HTML
+            if (data.success) {
+                updateInventoryDisplay(itemName);
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
+
+    function updateInventoryDisplay(itemName) {
+        const inventoryList = document.getElementById('inventory-list');
+        const newItem = document.createElement('li');
+        newItem.textContent = itemName;
+        inventoryList.appendChild(newItem);
+    }
+
     // Function to get items based on level
     function getAllItemsByLevel(level) {
         const items = {
@@ -437,8 +547,83 @@ if (!isset($_SESSION['username'])) {
             3: ["Dragon Sword", "Magic Sword", "Dragon Mail", "Magic Armor", "Superior Health Potion", "Superior Attack Potion", "Superior Defense Potion"],
             4: ["Excalibur", "Holy Sword", "Holy Armor", "Dragon Scale Armor", "Ultimate Health Potion", "Ultimate Attack Potion", "Ultimate Defense Potion"]
         };
-
         return items[level] || []; // Return items for the given level or an empty array if level is not matched
+    }
+
+    function searchUser() {
+        const searchInput = document.getElementById('search-input').value;
+        fetch('search_user.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ search: searchInput }),
+        })
+        .then(response => response.json())
+        .then(users => {
+            let resultsHtml = '<ul>';
+            users.forEach(user => {
+                resultsHtml += `<li>
+                    <a href="#" onclick="selectUser(${user.id}, '${user.username}')">${user.username} (ID: ${user.id})</a>
+                </li>`;
+            });
+            resultsHtml += '</ul>';
+            document.getElementById('search-results').innerHTML = resultsHtml;
+        })
+        .catch(error => {
+            console.error('Error searching user:', error);
+        });
+    }
+    
+    function selectUser(userId, username) {
+        document.getElementById('send-item-form').style.display = 'block';
+        document.getElementById('selected-user-id').value = userId;
+        document.getElementById('search-results').innerHTML = `<p>Selected User: ${username} (ID: ${userId})</p>`;
+        populateItemSelect();
+    }
+    
+    function populateItemSelect() {
+        fetch('get_items.php')
+        .then(response => response.json())
+        .then(items => {
+            const itemSelect = document.getElementById('item-select');
+            itemSelect.innerHTML = '';
+            items.forEach(item => {
+                itemSelect.innerHTML += `<option value="${item.id}">${item.item_name}</option>`;
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching items:', error);
+        });
+    }
+    
+    function sendItem() {
+        const userId = document.getElementById('selected-user-id').value;
+        const itemName = document.getElementById('item-select').value;
+        
+        fetch('send_item.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: userId, itemName: itemName }),
+        })
+        .then(response => response.json())
+        .then(result => {
+            Swal.fire({
+                title: result.status === 'success' ? 'Success' : 'Error',
+                text: result.message,
+                icon: result.status === 'success' ? 'success' : 'error',
+            }).then(() => {
+                if (result.status === 'success') {
+                    document.getElementById('send-item-form').style.display = 'none';
+                    document.getElementById('search-results').innerHTML = '';
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error sending item:', error);
+        });
     }
 
     function battleUi(){
@@ -452,6 +637,7 @@ if (!isset($_SESSION['username'])) {
         document.getElementById('useItemBtn').style.display = '';
         document.getElementById('quitBtn').style.display = '';
     }
+
     const advices = [
         "Keep your password updated.",
         "Use strong, unique passwords.",
@@ -469,6 +655,7 @@ if (!isset($_SESSION['username'])) {
     // Show the first advice and then rotate every 10 seconds
     showNextAdvice();
     setInterval(showNextAdvice, 10000);
+
 
     function loadInventory() {
         fetch('get_inventory.php')
