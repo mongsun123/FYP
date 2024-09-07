@@ -51,23 +51,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             // Hash the password
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-
+        
             // Insert the new user into the database
             $stmt = $conn->prepare("INSERT INTO user (username, email, password_hash, otp_secret) VALUES (?, ?, ?, ?)");
             $stmt->bind_param("ssss", $username, $email, $password_hash, $_SESSION['otp_secret']);
-
+        
             if ($stmt->execute()) {
-                // Clear OTP from session after successful registration
-                unset($_SESSION['otp_secret']);
-                unset($_SESSION['otp']);
-                $success = "Registration successful! You can now <a href='login.php'>login</a>.";
-                $redirect = true; // Flag to indicate redirection
+                // Get the last inserted user ID
+                $user_id = $conn->insert_id;
+        
+                // Insert default character stats for the new user
+                $stmt_stats = $conn->prepare("INSERT INTO character_stats (user_id, health, attack_power, defense, level, experience) VALUES (?, 100, 10, 5, 1, 0)");
+                $stmt_stats->bind_param("i", $user_id);
+        
+                if ($stmt_stats->execute()) {
+                    // Clear OTP from session after successful registration
+                    unset($_SESSION['otp_secret']);
+                    unset($_SESSION['otp']);
+                    $success = "Registration successful! You can now <a href='login.php'>login</a>.";
+                } else {
+                    $error = "Something went wrong while setting up your character stats. Please try again.";
+                }
+                $stmt_stats->close();
             } else {
                 $error = "Something went wrong. Please try again.";
             }
+            $stmt->close();
         }
+        
 
         $stmt->close();
+    }
+
+    // Generate a new OTP secret if an error occurs
+    if (isset($error)) {
+        $secret = $ga->generateSecret();
+        $_SESSION['otp_secret'] = $secret;
+        $user = 'Untitled'; 
+        $qrCodeUrl = GoogleQrUrl::generate($user, $secret, 'Battle v0.1');
     }
 }else {
     // Generate a unique secret for the registration form
@@ -184,14 +205,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </script>
             <?php endif; ?>
             <form class="login-form" method="POST" action="register.php">
-                <input type="text" name="username" placeholder="Username" class="login-input" required>
+            <input type="text" name="username" placeholder="Username" class="login-input" required pattern="[a-zA-Z0-9_-]+" oninput="checkUsername()" title="Username can only contain letters, numbers, underscores, or hyphens.">
+                <p id="username-requirements" style="color: red; display: none;">Username can only contain letters, numbers, underscores, or hyphens.</p>
                 <input type="email" id="email" name="email" placeholder="Email" class="login-input" required>
                 <!-- Container for OTP field and button -->
                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
                     <input type="text" name="otp_code" placeholder="Enter OTP" class="login-input" style="flex: 1; margin-right: 10px;" required>
                     <button type="button" id="send-otp-button" class="login-button" style="width: auto; padding: 10px 15px;" disabled>Send OTP</button>
                 </div>
-                <input type="password" name="password" placeholder="Password" class="login-input" required>
+                <input type="password" name="password" placeholder="Password" class="login-input" required oninput="validatePassword()">
+                <p id="password-requirements" style="color: red; display: none;">Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.</p>
                 <input type="password" name="confirm_password" placeholder="Confirm Password" class="login-input" required>
                 <input type="text" name="totp_code" placeholder="Enter TOTP" class="login-input" required>
                 <button type="submit" class="login-button">Register</button>
@@ -272,4 +295,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             xhr.send(`email=${encodeURIComponent(email)}`);
         });
     });
+    function validatePassword() {
+        const passwordInput = document.querySelector('input[name="password"]');
+        const passwordRequirements = document.getElementById('password-requirements');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        
+        if (!passwordRegex.test(passwordInput.value)) {
+            passwordRequirements.style.display = 'block';
+        } else {
+            passwordRequirements.style.display = 'none';
+        }
+    }
+
+    function checkUsername() {
+        const usernameInput = document.querySelector('input[name="username"]');
+        const usernameRequirements = document.getElementById('username-requirements');
+        const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+
+        if (!usernameRegex.test(usernameInput.value)) {
+            usernameRequirements.style.display = 'block';
+        } else {
+            usernameRequirements.style.display = 'none';
+        }
+    }
 </script>

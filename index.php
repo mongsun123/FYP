@@ -1,7 +1,7 @@
 <?php
 session_start();
 $userId = $_SESSION['user_id'];
-
+var_dump($_SESSION);
 // Set session timeout duration (in seconds)
 $timeout_duration = 600; // 10 minutes
 // Check if the "last_activity" session variable is set
@@ -27,7 +27,7 @@ if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
-
+$user_id = $_SESSION['user_id'];
 ?>
 
 <style>
@@ -181,6 +181,7 @@ if (!isset($_SESSION['username'])) {
             <button class="menu-button" id='battleBtn' onclick="changeMenu('Battle')">Battle</button>
             <button class="menu-button" id='userStatBtn'onclick="changeMenu('User Stat')">User Stat</button>
             <button class="menu-button" id='inventoryBtn'onclick="changeMenu('Inventory')">Inventory</button>
+            <button class="menu-button" id='leaderboardBtn'onclick="changeMenu('Leaderboard')">Leaderboard</button>
             <!-- Battle -->
             <button class="menu-button" id='easyBtn'onclick="changeMenu('Easy')" style="display: none;">Easy</button>
             <button class="menu-button" id='mediumBtn'onclick="changeMenu('Medium')" style="display: none;">Medium</button>
@@ -257,6 +258,7 @@ if (!isset($_SESSION['username'])) {
             document.getElementById('battleBtn').style.display = 'none';
             document.getElementById('userStatBtn').style.display = 'none';
             document.getElementById('inventoryBtn').style.display = 'none';
+            document.getElementById('leaderboardBtn').style.display = 'none';
             
             document.getElementById('easyBtn').style.display = '';
             document.getElementById('mediumBtn').style.display = '';
@@ -272,11 +274,20 @@ if (!isset($_SESSION['username'])) {
                         <p>Attack: ${attack}</p>
                         <p>Defense: ${defense}</p>
                         <p>Exp: ${exp} / ${expRequired}</p>`;
+        } else if (menuName === 'Leaderboard') {
+            document.getElementById('menu-title').textContent = menuName;
+            content = `<p>Your stats show your current level and abilities.</p>
+                        <p>Level: ${level}</p>
+                        <p>HP: ${playerMaxHp}</p>
+                        <p>Attack: ${attack}</p>
+                        <p>Defense: ${defense}</p>
+                        <p>Exp: ${exp} / ${expRequired}</p>`;
         } else if (menuName === 'Inventory') {
             document.getElementById('menu-title').textContent = menuName;
             document.getElementById('battleBtn').style.display = 'none';
             document.getElementById('userStatBtn').style.display = 'none';
             document.getElementById('inventoryBtn').style.display = 'none';
+            document.getElementById('leaderboardBtn').style.display = 'none';
             
             document.getElementById('sendItemBtn').style.display = '';
             document.getElementById('backBtn').style.display = '';
@@ -422,11 +433,13 @@ if (!isset($_SESSION['username'])) {
 
             document.getElementById('content-layer').innerHTML = content;
         } else if (menuName === 'Back') {
+            loadInventory();
             resetStats();
 
             document.getElementById('battleBtn').style.display = '';
             document.getElementById('userStatBtn').style.display = '';
             document.getElementById('inventoryBtn').style.display = '';
+            document.getElementById('leaderboardBtn').style.display = '';
             
             document.getElementById('easyBtn').style.display = 'none';
             document.getElementById('mediumBtn').style.display = 'none';
