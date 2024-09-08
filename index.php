@@ -1,4 +1,5 @@
 <?php
+include('connection.php'); 
 session_start();
 $userId = $_SESSION['user_id'];
 var_dump($_SESSION);
@@ -18,6 +19,14 @@ if (isset($_SESSION['last_activity'])) {
     }
 }
 
+$query = "SELECT health, attack_power, defense, level, experience FROM character_stats WHERE user_id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$stmt->bind_result($health, $attack_power, $defense, $level, $experience);
+$stmt->fetch();
+$stmt->close();
+$expRequired = $level * 100;
 // Update "last_activity" to the current time
 $_SESSION['last_activity'] = time();
 
@@ -27,7 +36,6 @@ if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
-$user_id = $_SESSION['user_id'];
 ?>
 
 <style>
@@ -199,6 +207,7 @@ $user_id = $_SESSION['user_id'];
 
         <div class="content-layer" id="content-layer">
             <!-- Main game content goes here -->
+
             <p>You enter the dark forest. The trees seem to whisper around you. A goblin appears in the clearing ahead.</p>
         </div>
         
@@ -217,38 +226,26 @@ $user_id = $_SESSION['user_id'];
 
 <script>
     const playerId = <?php echo json_encode($_SESSION['user_id']); ?>;
-    let easyMaxHp = 100;
-    let easyhp = easyMaxHp;
-    let easyattack = 5;
-    let easydefense = 5;
-
-    let mediumMaxHp = 150;
-    let mediumhp = mediumMaxHp;
-    let mediumattack = 10;
-    let mediumdefense = 10;
-
-    let hardMaxHp = 200;
-    let hardhp = hardMaxHp;
-    let hardattack = 15;
-    let harddefense = 15;
-
-    let insaneMaxHp = 300;
-    let insanehp = insaneMaxHp;
-    let insaneattack = 25;
-    let insanedefense = 25;
 
     let enemyMaxHp;  // Maximum HP for easy level enemy
     let enemyHp;  // Current HP for easy level enemy
     let enemyAttack;
     let enemyDefense;
     
-    let playerMaxHp = 100;  // Maximum HP for the player
+    let playerMaxHp = <?php echo $health; ?>;
     let playerHp = playerMaxHp;  // Current HP for the player
-    let level = 5;
-    let attack = 10;
-    let defense = 10;
-    let exp = 5;
-    let expRequired = 100;
+    let attack = <?php echo $attack_power; ?>;
+    let defense = <?php echo $defense; ?>;
+    let level = <?php echo $level; ?>;
+    let exp = <?php echo $experience; ?>;
+    let expRequired = <?php echo $expRequired; ?>;
+
+
+    
+    let temporaryAttack = attack; // Use temporary variable for attack power
+            let temporaryHp = playerHp; // Use temporary variable for attack power
+            let temporaryDefense = defense; // Use temporary variable for attack power
+    let inventory = []; // Initialize an empty inventory
 
     function changeMenu(menuName) {
         // Change content based on the selected menu
@@ -361,7 +358,7 @@ $user_id = $_SESSION['user_id'];
                       '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
                       '<p>Your HP: ' + playerHp + '</p>' +
                       '<p>Your Attack Power: ' + attack + '</p>' +
-                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Your Defense Power: ' + defense + '</p>' +
                       '<p>Choose your action:</p>'
             //content = '<p>Your stats show your current level and abilities.</p>';
         } else if (menuName === 'Medium') {
@@ -379,7 +376,7 @@ $user_id = $_SESSION['user_id'];
                       '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
                       '<p>Your HP: ' + playerHp + '</p>' +
                       '<p>Your Attack Power: ' + attack + '</p>' +
-                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Your Defense Power: ' + defense + '</p>' +
                       '<p>Choose your action:</p>'
         } else if (menuName === 'Hard') {
             document.getElementById('menu-title').textContent = menuName;
@@ -396,7 +393,7 @@ $user_id = $_SESSION['user_id'];
                       '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
                       '<p>Your HP: ' + playerHp + '</p>' +
                       '<p>Your Attack Power: ' + attack + '</p>' +
-                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Your Defense Power: ' + defense + '</p>' +
                       '<p>Choose your action:</p>'
         } else if (menuName === 'Insane') {
             document.getElementById('menu-title').textContent = menuName;
@@ -413,7 +410,7 @@ $user_id = $_SESSION['user_id'];
                       '<p>Enemy Defense Power: ' + enemyDefense + '</p>' +
                       '<p>Your HP: ' + playerHp + '</p>' +
                       '<p>Your Attack Power: ' + attack + '</p>' +
-                      '<p>Your Attack Power: ' + defense + '</p>' +
+                      '<p>Your Defense Power: ' + defense + '</p>' +
                       '<p>Choose your action:</p>'
         } else if (menuName === 'Send Item') {
             document.getElementById('menu-title').textContent = menuName;
@@ -456,7 +453,6 @@ $user_id = $_SESSION['user_id'];
         }else if (menuName === 'Attack') {
             // Get player's level (this could be stored in a variable or retrieved from the database/session)
             let playerLevel;
-            console.log(enemyMaxHp);
             if(enemyMaxHp == 100){
                 playerLevel = 1; // Example level, replace with actual level retrieval logic
             }else if(enemyMaxHp == 150){
@@ -471,7 +467,7 @@ $user_id = $_SESSION['user_id'];
             const itemsForLevel = getAllItemsByLevel(playerLevel);
 
             // Player attacks
-            let damageToEnemy = attack - enemyDefense;
+            let damageToEnemy = temporaryAttack - enemyDefense;
             if (damageToEnemy < 0) damageToEnemy = 0;
             enemyHp -= damageToEnemy;
 
@@ -484,6 +480,45 @@ $user_id = $_SESSION['user_id'];
                 document.getElementById('attackBtn').style.display = 'none';
                 document.getElementById('useItemBtn').style.display = 'none';
 
+                // Increase player EXP based on level
+                let expGain = 0;
+                switch (playerLevel) {
+                    case 1:
+                        expGain = 30;
+                        break;
+                    case 2:
+                        expGain = 50;
+                        break;
+                    case 3:
+                        expGain = 70;
+                        break;
+                    case 4:
+                        expGain = 120;
+                        break;
+                }
+            
+                exp += expGain; // Add gained experience to player's total experience
+                content += `<p>You gained ${expGain} experience points!</p>`;
+                
+                expDiff = expRequired - exp;
+                if(expDiff <0 ){
+                    expDiff = 0;
+                }
+                content += `<p>Still need  ${expDiff} experience to level up!</p>`;
+                // Check if player levels up (example logic)
+                if (exp >= expRequired) {
+                    level++;
+                    exp = exp - expRequired; // Reset experience points after leveling up
+                    expRequired = level * 100; // Update the experience required for the next level
+                    content += `<p>Congratulations! You've reached level ${level}!</p>`;
+                    
+                    playerMaxHp += 5;
+                    attack += 2;
+                    defense += 2;
+                    content += `<p>Your stats have increased: HP +5, Attack +2, Defense +2</p>`;
+                    updatePlayerStats(exp, level, playerMaxHp, attack, defense);
+                }
+
                 const selectedItem = getRandomItem(itemsForLevel);
                 // Assign items to player based on the level
                 content += '<p>You found the following item:</p>';
@@ -495,36 +530,74 @@ $user_id = $_SESSION['user_id'];
                 // Enemy's turn to attack
                 let missChance = Math.random();
                 if (missChance > 0.1) {  // 90% chance to hit
-                    let damageToPlayer = enemyAttack - defense;
+                    let damageToPlayer = enemyAttack - temporaryDefense;
                     if (damageToPlayer < 0) damageToPlayer = 0;
-                    playerHp -= damageToPlayer;
+                    temporaryHp -= damageToPlayer;
 
                     content += '<p>The enemy attacks you!</p>' +
-                               '<p>Your HP remaining: ' + playerHp + '</p>';
+                               '<p>Your HP remaining: ' + temporaryHp + '</p>';
                 } else {
                     content += '<p>The enemy missed their attack!</p>';
                 }
 
                 // Check if the player is defeated
-                if (playerHp <= 0) {
+                if (temporaryHp <= 0) {
                     content += '<p>You were defeated by the enemy!</p>';
                     document.getElementById('attackBtn').style.display = 'none';
                     document.getElementById('useItemBtn').style.display = 'none';
                 }
             }
-        }else if (menuName === 'Defense') {
-            content = '<p>You prepare to defend!</p>';
+        }else if (menuName === 'Use Item') {
+            // Fetch the player's inventory and filter for potions
+            const potions = inventory.filter(item => item.item_type === 'potion'  && item.quantity > 0);
+
+            if (potions.length === 0) {
+                content = '<p>You have no potions available to use!</p>';
+            } else {
+                // Display available potions
+                content = '<p>Select a potion to use:</p>';
+                potions.forEach((potion, index) => {
+                    content += `<button onclick="applyPotion(${index})">${potion.item_name} (${potion.item_description}) - Effect: ${potion.item_effect}</button><br>`;
+                });
+            }
+
+            // Update the content area
+            document.getElementById('content-layer').innerHTML = content;
+            loadInventory();
         }
         document.getElementById('content-layer').innerHTML = content;
     }
 
+    
     function resetStats() {
         playerHp = playerMaxHp;
         enemyHp = enemyMaxHp;
+        
+        temporaryAttack = attack;
+        temporaryDefense = defense;
+        temporaryHp = playerHp;
     }
 
     function getRandomItem(items) {
         return items[Math.floor(Math.random() * items.length)];
+    }
+
+    // Function to update player stats in the database
+    function updatePlayerStats(exp, level, hp, attackPower, defense) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "update_experience.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.status === 'success') {
+                    console.log("Experience and level updated successfully.");
+                } else {
+                    console.error("Failed to update experience and level:", response.message);
+                }
+            }
+        };
+        xhr.send(`exp=${exp}&level=${level}&hp=${hp}&attack_power=${attackPower}&defense=${defense}`);
     }
 
     function addItemToInventory(playerId, itemName) {
@@ -563,6 +636,53 @@ $user_id = $_SESSION['user_id'];
         return items[level] || []; // Return items for the given level or an empty array if level is not matched
     }
 
+    function applyPotion(index) {
+        const potion = inventory.filter(item => item.item_type === 'potion')[index];
+        let content = '';
+
+        if (!potion) {
+            content = '<p>Invalid potion selection.</p>';
+        } else {
+            // Apply the potion's effect
+            if (potion.item_name.includes('Health Potion')) {
+                temporaryHp += parseInt(potion.item_effect);
+                content = `<p>You used a ${potion.item_name}. Your HP increased by ${potion.item_effect}!</p>
+                            <p>Your HP: ${temporaryHp-potion.item_effect} -> ${temporaryHp}!</p>`;
+            } else if (potion.item_name.includes('Attack Potion')) {
+                temporaryAttack += parseInt(potion.item_effect);
+                content = `<p>You used an ${potion.item_name}. Your attack increased by ${potion.item_effect}!</p>
+                            <p>Your HP: ${temporaryAttack-potion.item_effect} -> ${temporaryAttack}!</p>`;
+            } else if (potion.item_name.includes('Defense Potion')) {
+                temporaryDefense += parseInt(potion.item_effect);
+                content = `<p>You used a ${potion.item_name}. Your defense increased by ${potion.item_effect}!</p>
+                            <p>Your HP: ${temporaryDefense-potion.item_effect} -> ${temporaryDefense}!</p>`;
+            }
+
+            // Update the inventory and database
+            fetch('update_inventory.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ item_id: potion.item_id, user_id: playerId, quantity: potion.quantity - 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadInventory(); // Reload the inventory after using an item
+                } else {
+                    content += `<p>Error updating inventory: ${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error updating inventory:', error);
+                content += '<p>An error occurred. Please check the console for more details.</p>';
+            });
+        }
+
+        document.getElementById('content-layer').innerHTML = content;
+    }
+    
     function searchUser() {
         const searchInput = document.getElementById('search-input').value;
         fetch('search_user.php', {
@@ -674,6 +794,7 @@ $user_id = $_SESSION['user_id'];
         fetch('get_inventory.php')
             .then(response => response.json())
             .then(data => {
+                inventory = data; // Store fetched inventory data globally
                 const inventoryList = document.getElementById('inventory-list');
                 inventoryList.innerHTML = ''; // Clear the list
             
@@ -681,6 +802,7 @@ $user_id = $_SESSION['user_id'];
                     const li = document.createElement('li');
                     li.textContent = `${item.item_name} (x${item.quantity})`;
                     inventoryList.appendChild(li);
+                    
                 });
             })  
             .catch(error => console.error('Error fetching inventory:', error));

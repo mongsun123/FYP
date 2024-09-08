@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $user_id = $conn->insert_id;
         
                 // Insert default character stats for the new user
-                $stmt_stats = $conn->prepare("INSERT INTO character_stats (user_id, health, attack_power, defense, level, experience) VALUES (?, 100, 10, 5, 1, 0)");
+                $stmt_stats = $conn->prepare("INSERT INTO character_stats (user_id, health, attack_power, defense, level, experience) VALUES (?, 100, 10, 10, 1, 0)");
                 $stmt_stats->bind_param("i", $user_id);
         
                 if ($stmt_stats->execute()) {
@@ -76,9 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $error = "Something went wrong. Please try again.";
             }
-            $stmt->close();
         }
-        
 
         $stmt->close();
     }

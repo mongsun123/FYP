@@ -14,7 +14,7 @@ $user_id = $user['id']; // Fetch the user ID
 $stmt->close(); // Close the statement
 
 // Securely fetch inventory items for the user
-$stmt = $conn->prepare("SELECT i.item_name, i.item_description, i.item_type, i.item_value, i.item_effect, inv.quantity, 
+$stmt = $conn->prepare("SELECT i.item_name, i.item_description, i.item_type, i.item_value, i.item_effect, inv.quantity, inv.item_id,
                         CASE 
                             WHEN i.id BETWEEN 1 AND 7 THEN 1 
                             WHEN i.id BETWEEN 8 AND 14 THEN 2 
