@@ -651,11 +651,11 @@ if (!isset($_SESSION['username'])) {
             } else if (potion.item_name.includes('Attack Potion')) {
                 temporaryAttack += parseInt(potion.item_effect);
                 content = `<p>You used an ${potion.item_name}. Your attack increased by ${potion.item_effect}!</p>
-                            <p>Your HP: ${temporaryAttack-potion.item_effect} -> ${temporaryAttack}!</p>`;
+                            <p>Your Attack Power: ${temporaryAttack-potion.item_effect} -> ${temporaryAttack}!</p>`;
             } else if (potion.item_name.includes('Defense Potion')) {
                 temporaryDefense += parseInt(potion.item_effect);
                 content = `<p>You used a ${potion.item_name}. Your defense increased by ${potion.item_effect}!</p>
-                            <p>Your HP: ${temporaryDefense-potion.item_effect} -> ${temporaryDefense}!</p>`;
+                            <p>Your Defense Power: ${temporaryDefense-potion.item_effect} -> ${temporaryDefense}!</p>`;
             }
 
             // Update the inventory and database
