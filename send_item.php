@@ -2,10 +2,44 @@
 include('connection.php'); 
 session_start();
 
+// Fetch and validate input
 $data = json_decode(file_get_contents('php://input'), true);
 $senderId = $_SESSION['user_id'];
 $recipientId = $data['userId'];
 $itemName = $data['itemName'];
+$otp = $data['otp'] ?? '';
+$totp = $data['totp'] ?? '';
+
+$session_otp = (string) $_SESSION['otp'];
+// Verify OTP
+if ($otp != $session_otp) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid OTP']);
+    exit;
+}
+
+// Fetch TOTP secret from database
+$stmt = $conn->prepare("SELECT otp_secret FROM user WHERE id = ?");
+$stmt->bind_param("i", $senderId);
+$stmt->execute();
+$stmt->bind_result($secret);
+$stmt->fetch();
+$stmt->close();
+
+if (!$secret) {
+    echo json_encode(['status' => 'error', 'message' => 'TOTP secret not found']);
+    exit;
+}
+
+// Verify TOTP
+require 'vendor/autoload.php'; // Adjust path if necessary
+use Sonata\GoogleAuthenticator\GoogleAuthenticator;
+
+$googleAuthenticator = new GoogleAuthenticator();
+
+if (!$googleAuthenticator->checkCode($secret, $totp)) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid TOTP']);
+    exit;
+}
 
 // Find the item ID from the item table
 $stmt = $conn->prepare("SELECT id FROM item WHERE id = ?");

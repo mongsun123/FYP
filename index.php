@@ -2,7 +2,14 @@
 include('connection.php'); 
 session_start();
 $userId = $_SESSION['user_id'];
-var_dump($_SESSION);
+//var_dump($_SESSION);
+
+// Check if the user is logged in
+if (!isset($_SESSION['username'])) {
+    // Redirect to login page if not logged in
+    header("Location: login.php");
+    exit();
+}
 // Set session timeout duration (in seconds)
 $timeout_duration = 600; // 10 minutes
 // Check if the "last_activity" session variable is set
@@ -30,12 +37,14 @@ $expRequired = $level * 100;
 // Update "last_activity" to the current time
 $_SESSION['last_activity'] = time();
 
-// Check if the user is logged in
-if (!isset($_SESSION['username'])) {
-    // Redirect to login page if not logged in
-    header("Location: login.php");
-    exit();
-}
+$email = '';
+$stmt = $conn->prepare("SELECT email FROM user WHERE id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$stmt->bind_result($email);
+$stmt->fetch();
+$stmt->close();
+
 ?>
 
 <style>
@@ -273,12 +282,44 @@ if (!isset($_SESSION['username'])) {
                         <p>Exp: ${exp} / ${expRequired}</p>`;
         } else if (menuName === 'Leaderboard') {
             document.getElementById('menu-title').textContent = menuName;
-            content = `<p>Your stats show your current level and abilities.</p>
-                        <p>Level: ${level}</p>
-                        <p>HP: ${playerMaxHp}</p>
-                        <p>Attack: ${attack}</p>
-                        <p>Defense: ${defense}</p>
-                        <p>Exp: ${exp} / ${expRequired}</p>`;
+                
+            // Fetch leaderboard data from the server
+            fetch('get_leaderboard.php')
+            .then(response => response.json())
+            .then(data => {
+                let content = '<h2>Leaderboard - Top 10 Players</h2>';
+                
+                if (data.length > 0) {
+                    content += `<table class="inventory-table">
+                                  <thead>
+                                    <tr>
+                                      <th style="width: 50%;">Username</th>
+                                      <th style="width: 25%;">Level</th>
+                                      <th style="width: 25%;">Experience</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>`;
+                    
+                    // Add rows for each player
+                    data.forEach(player => {
+                        content += `<tr>
+                                      <td style="width: 50%;">${player.username}</td>
+                                      <td style="width: 25%;">${player.level}</td>
+                                      <td style="width: 25%;">${player.experience}</td>
+                                    </tr>`;
+                    });
+                    
+                    content += `</tbody></table>`;
+                } else {
+                    content += '<p>No players found on the leaderboard.</p>';
+                }
+                
+                document.getElementById('content-layer').innerHTML = content;
+            })
+            .catch(error => {
+                console.error('Error fetching leaderboard data:', error);
+                document.getElementById('content-layer').innerHTML = '<p>An error occurred while fetching the leaderboard. Please try again later.</p>';
+            });
         } else if (menuName === 'Inventory') {
             document.getElementById('menu-title').textContent = menuName;
             document.getElementById('battleBtn').style.display = 'none';
@@ -422,12 +463,21 @@ if (!isset($_SESSION['username'])) {
                 <div id="send-item-form" style="display:none;">
                     <h3>Send Item</h3>
                     <input type="hidden" id="selected-user-id">
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <input type="text" id="email" value="<?php echo $email; ?>" style="flex: 1; margin-right: 10px;" readonly required>
+                        <button type="button" id="send-otp-button" class="login-button" style="width: auto; padding: 10px 10px;">Send OTP</button>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <input type="text" id="otp-code" placeholder="Enter Email OTP" class="login-input" style="flex: 1; margin-right: 10px;" required>
+                        <input type="text" id="totp-code" placeholder="Enter TOTP" class="login-input" style="flex: 1;" required>
+                    </div>
                     <label for="item-select">Choose an item to send:</label>
                     <select id="item-select"></select>
                     <button onclick="sendItem()">Send Item</button>
                 </div>
             `;
 
+            // Inject content into the DOM
             document.getElementById('content-layer').innerHTML = content;
         } else if (menuName === 'Back') {
             loadInventory();
@@ -516,9 +566,9 @@ if (!isset($_SESSION['username'])) {
                     attack += 2;
                     defense += 2;
                     content += `<p>Your stats have increased: HP +5, Attack +2, Defense +2</p>`;
-                    updatePlayerStats(exp, level, playerMaxHp, attack, defense);
+                    
                 }
-
+                updatePlayerStats(exp, level, playerMaxHp, attack, defense);
                 const selectedItem = getRandomItem(itemsForLevel);
                 // Assign items to player based on the level
                 content += '<p>You found the following item:</p>';
@@ -568,7 +618,58 @@ if (!isset($_SESSION['username'])) {
         document.getElementById('content-layer').innerHTML = content;
     }
 
-    
+    // Event listener for the Send OTP button using delegation
+    document.addEventListener('click', function(event) {
+        if (event.target && event.target.id === 'send-otp-button') {
+            const emailInput = document.getElementById('email');
+            const email = emailInput.value.trim();
+
+            Swal.fire({
+                title: 'Sending OTP...',
+                html: 'Please wait while we send your OTP.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                willClose: () => {
+                    Swal.hideLoading();
+                }
+            });
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'send_item_otp.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'OTP sent successfully!',
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'Failed to send OTP. Please try again.',
+                        });
+                    }
+                }
+            };
+
+            xhr.onerror = function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred. Please try again later.',
+                });
+            };
+
+            xhr.send(`email=${encodeURIComponent(email)}`);
+        }
+    });
+
     function resetStats() {
         playerHp = playerMaxHp;
         enemyHp = enemyMaxHp;
@@ -733,13 +834,17 @@ if (!isset($_SESSION['username'])) {
     function sendItem() {
         const userId = document.getElementById('selected-user-id').value;
         const itemName = document.getElementById('item-select').value;
+        const otp = document.getElementById('otp-code').value; // Add OTP input
+        const totp = document.getElementById('totp-code').value; // Add TOTP input
         
         fetch('send_item.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ userId: userId, itemName: itemName }),
+            body: JSON.stringify({ userId: userId, itemName: itemName,
+            otp: otp,
+            totp: totp }),
         })
         .then(response => response.json())
         .then(result => {
@@ -757,6 +862,7 @@ if (!isset($_SESSION['username'])) {
         .catch(error => {
             console.error('Error sending item:', error);
         });
+        loadInventory();
     }
 
     function battleUi(){

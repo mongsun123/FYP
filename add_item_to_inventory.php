@@ -24,7 +24,7 @@ if ($item_id) {
     $stmt->fetch();
     $stmt->close();
 
-    if ($quantity > 0) {
+    if ($quantity >= 0) {
         // If item already exists in the inventory, update quantity
         $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + 1 WHERE user_id = ? AND item_id = ?");
         $stmt->bind_param("ii", $playerId, $item_id);
