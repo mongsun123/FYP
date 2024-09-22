@@ -38,10 +38,10 @@ $expRequired = $level * 100;
 $_SESSION['last_activity'] = time();
 
 $email = '';
-$stmt = $conn->prepare("SELECT email FROM user WHERE id = ?");
+$stmt = $conn->prepare("SELECT username, password_hash, email FROM user WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
-$stmt->bind_result($email);
+$stmt->bind_result($username, $password_hash, $email);
 $stmt->fetch();
 $stmt->close();
 
@@ -199,6 +199,7 @@ $stmt->close();
             <button class="menu-button" id='userStatBtn'onclick="changeMenu('User Stat')">User Stat</button>
             <button class="menu-button" id='inventoryBtn'onclick="changeMenu('Inventory')">Inventory</button>
             <button class="menu-button" id='leaderboardBtn'onclick="changeMenu('Leaderboard')">Leaderboard</button>
+            <button class="menu-button" id='profileBtn'onclick="changeMenu('Profile')">Profile</button>
             <!-- Battle -->
             <button class="menu-button" id='easyBtn'onclick="changeMenu('Easy')" style="display: none;">Easy</button>
             <button class="menu-button" id='mediumBtn'onclick="changeMenu('Medium')" style="display: none;">Medium</button>
@@ -248,6 +249,11 @@ $stmt->close();
     let level = <?php echo $level; ?>;
     let exp = <?php echo $experience; ?>;
     let expRequired = <?php echo $expRequired; ?>;
+    
+    let userId = <?php echo json_encode($userId); ?>;
+    let username = <?php echo json_encode($username); ?>;
+    let email = <?php echo json_encode($email); ?>;
+    let password_hash = <?php echo json_encode($password_hash); ?>;
 
 
     
@@ -265,6 +271,7 @@ $stmt->close();
             document.getElementById('userStatBtn').style.display = 'none';
             document.getElementById('inventoryBtn').style.display = 'none';
             document.getElementById('leaderboardBtn').style.display = 'none';
+            document.getElementById('profileBtn').style.display = 'none';
             
             document.getElementById('easyBtn').style.display = '';
             document.getElementById('mediumBtn').style.display = '';
@@ -320,12 +327,34 @@ $stmt->close();
                 console.error('Error fetching leaderboard data:', error);
                 document.getElementById('content-layer').innerHTML = '<p>An error occurred while fetching the leaderboard. Please try again later.</p>';
             });
+        } else if (menuName === 'Profile') {
+            document.getElementById('menu-title').textContent = menuName;
+            content = `<div id="profile-section">
+                            <h2 id="menu-title">Profile</h2>
+                            <form id="profile-form">
+                                <label for="profile-id">ID: ${userId}</label><br>
+
+                                <label for="profile-username">Username:</label>
+                                <input type="text" id="profile-username" value="${username}"><br>
+
+                                <label for="profile-email">Email:${email}</label><br>
+
+                                <label for="old-password">Old Password:</label>
+                                <input type="password" id="old-password"><br>
+
+                                <label for="profile-password">New Password:</label>
+                                <input type="password" id="profile-password"><br>
+
+                                <button type="button" id="save-profile">Save Changes</button>
+                            </form>
+                        </div>`;
         } else if (menuName === 'Inventory') {
             document.getElementById('menu-title').textContent = menuName;
             document.getElementById('battleBtn').style.display = 'none';
             document.getElementById('userStatBtn').style.display = 'none';
             document.getElementById('inventoryBtn').style.display = 'none';
             document.getElementById('leaderboardBtn').style.display = 'none';
+            document.getElementById('profileBtn').style.display = 'none';
             
             document.getElementById('sendItemBtn').style.display = '';
             document.getElementById('backBtn').style.display = '';
@@ -487,6 +516,7 @@ $stmt->close();
             document.getElementById('userStatBtn').style.display = '';
             document.getElementById('inventoryBtn').style.display = '';
             document.getElementById('leaderboardBtn').style.display = '';
+            document.getElementById('profileBtn').style.display = '';
             
             document.getElementById('easyBtn').style.display = 'none';
             document.getElementById('mediumBtn').style.display = 'none';
@@ -617,7 +647,6 @@ $stmt->close();
         }
         document.getElementById('content-layer').innerHTML = content;
     }
-
     // Event listener for the Send OTP button using delegation
     document.addEventListener('click', function(event) {
         if (event.target && event.target.id === 'send-otp-button') {
@@ -667,6 +696,46 @@ $stmt->close();
             };
 
             xhr.send(`email=${encodeURIComponent(email)}`);
+        }else if(event.target && event.target.id === 'save-profile'){
+            // Get updated values from input fields
+            const updatedUsername = document.getElementById('profile-username').value;
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword  = document.getElementById('profile-password').value;
+
+            // Define the password regex (same as the one used in PHP)
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+
+            // Validate the password meets the criteria
+            if (!passwordRegex.test(newPassword)) {
+                alert('Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character (!@#$%^&*).');
+                return; // Stop the form submission if the password is invalid
+            }
+            // Create a data object to send to the server
+            const profileData = {
+                userId: userId, // Pass the userId you embedded from PHP
+                username: updatedUsername,
+                oldPassword: oldPassword,
+                newPassword: newPassword
+            };
+
+            // Send an AJAX request to update the profile
+            fetch('update_profile.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(profileData) // Convert JS object to JSON
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Profile updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error updating profile: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
         }
     });
 
