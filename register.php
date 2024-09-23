@@ -178,6 +178,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .login-links a:hover {
             text-decoration: underline;
         }
+        .send-button {
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #ff6f00, #ff8e53);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0px 0px 10px 2px #ff6f00;
+        }
     </style>
 </head>
 <body>
@@ -207,9 +220,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p id="username-requirements" style="color: red; display: none;">Username can only contain letters, numbers, underscores, or hyphens.</p>
                 <input type="email" id="email" name="email" placeholder="Email" class="login-input" required>
                 <!-- Container for OTP field and button -->
-                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center;">
                     <input type="text" name="otp_code" placeholder="Enter OTP" class="login-input" style="flex: 1; margin-right: 10px;" required>
-                    <button type="button" id="send-otp-button" class="login-button" style="width: auto; padding: 10px 15px;" disabled>Send OTP</button>
+                    <button type="button" id="send-otp-button" class="send-button" style="width: auto; padding: 10px 15px;" disabled>Send OTP</button>
                 </div>
                 <input type="password" name="password" placeholder="Password" class="login-input" required oninput="validatePassword()">
                 <p id="password-requirements" style="color: red; display: none;">Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.</p>
