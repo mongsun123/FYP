@@ -38,10 +38,10 @@ $expRequired = $level * 100;
 $_SESSION['last_activity'] = time();
 
 $email = '';
-$stmt = $conn->prepare("SELECT username, password_hash, email FROM user WHERE id = ?");
+$stmt = $conn->prepare("SELECT username, password_hash, email, created_at FROM user WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
-$stmt->bind_result($username, $password_hash, $email);
+$stmt->bind_result($username, $password_hash, $email, $created_at);
 $stmt->fetch();
 $stmt->close();
 
@@ -217,8 +217,7 @@ $stmt->close();
 
         <div class="content-layer" id="content-layer">
             <!-- Main game content goes here -->
-
-            <p>You enter the dark forest. The trees seem to whisper around you. A goblin appears in the clearing ahead.</p>
+            <!--<p>You enter the dark forest. The trees seem to whisper around you. A goblin appears in the clearing ahead.</p>-->
         </div>
         
         <div class="inventory-layer">
@@ -254,6 +253,8 @@ $stmt->close();
     let username = <?php echo json_encode($username); ?>;
     let email = <?php echo json_encode($email); ?>;
     let password_hash = <?php echo json_encode($password_hash); ?>;
+    let created_at = <?php echo json_encode($created_at); ?>;
+    
 
 
     
@@ -334,15 +335,16 @@ $stmt->close();
                             <form id="profile-form">
                                 <label for="profile-id">ID: ${userId}</label><br>
 
-                                <label for="profile-username">Username:</label>
+                                <label for="profile-username">Username: </label>
                                 <input type="text" id="profile-username" value="${username}"><br>
 
-                                <label for="profile-email">Email:${email}</label><br>
+                                <label for="profile-email">Email: ${email}</label><br>
+                                <label for="profile-created-at">Created at: ${created_at}</label><br>
 
-                                <label for="old-password">Old Password:</label>
+                                <label for="old-password">Old Password: </label>
                                 <input type="password" id="old-password"><br>
 
-                                <label for="profile-password">New Password:</label>
+                                <label for="profile-password">New Password: </label>
                                 <input type="password" id="profile-password"><br>
 
                                 <button type="button" id="save-profile">Save Changes</button>
@@ -867,7 +869,7 @@ $stmt->close();
             let resultsHtml = '<ul>';
             users.forEach(user => {
                 resultsHtml += `<li>
-                    <a href="#" onclick="selectUser(${user.id}, '${user.username}')">${user.username} (ID: ${user.id})</a>
+                    <a style="color: white;" href="#" onclick="selectUser(${user.id}, '${user.username}')">${user.username} (ID: ${user.id})</a>
                 </li>`;
             });
             resultsHtml += '</ul>';

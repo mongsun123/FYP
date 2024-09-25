@@ -148,13 +148,13 @@ body, html {
                 <?php if (isset($error)): ?>
                     <p class="error-message"><?= $error ?></p>
                 <?php endif; ?>
-                <input type="text" name="username" placeholder="Username" class="login-input">
-                <input type="password" name="password" placeholder="Password" class="login-input">
-                <input type="text" name="totp_code" placeholder="Enter TOTP" class="login-input">
+                <input type="text" name="username" placeholder="Username" class="login-input" required>
+                <input type="password" name="password" placeholder="Password" class="login-input" required>
+                <input type="text" name="totp_code" placeholder="Enter TOTP" class="login-input" required>
                 <button type="submit" class="login-button">Login</button>
             </form>
             <div class="login-links">
-                <a href="#">Forgot Password?</a> | <a href="register.php">Create Account</a>
+                <a href="register.php">Don't have an account? Create Account</a>
             </div>
         </div>
     </div>

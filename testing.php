@@ -225,3 +225,44 @@
                - System may offer to resend Email OTP if needed
                - If multiple incorrect attempts, system may temporarily block the high-security action
                - User can cancel the action at any point, returning to the previous screen |
+
+               # Battle v0.1 Web Application Use Case Table - Profile Management Addition
+
+## 14. View Profile
+
+| Aspect | Details |
+|--------|---------|
+| Description | User views their profile information |
+| Actors | User |
+| Preconditions | User is logged in |
+| Postconditions | User's profile information is displayed |
+| Basic Flow | 1. User navigates to the profile page
+               2. System retrieves user's profile information
+               3. System displays profile information to the user, which may include:
+                  - Username
+                  - Email address
+                  - Account creation date
+                  - Avatar (if applicable)
+                  - Other relevant game-specific information |
+| Alternative Flow | - If there's an error retrieving profile data, system displays an error message and suggests trying again
+               - User may have the option to navigate directly to the "Update Profile" page from here |
+
+## 15. Update Profile
+
+| Aspect | Details |
+|--------|---------|
+| Description | User modifies their profile information |
+| Actors | User |
+| Preconditions | User is logged in and viewing their profile |
+| Postconditions | User's profile information is updated in the system |
+| Basic Flow | 1. User selects "Edit Profile" or "Update Profile" option
+               2. System displays editable profile fields
+               3. User makes desired changes to their profile information
+               4. User submits the changes
+               5. System validates the input
+               6. If validation passes, system updates the user's profile in the database
+               7. System confirms successful update to the user |
+| Alternative Flow | - If user attempts to change critical information (e.g., email), system may require additional verification (Email OTP and/or TOTP)
+               - If input validation fails, system informs user of the issues and allows corrections
+               - User can cancel the update process, reverting to the original profile view
+               - If updating email, system may require re-verification of the new email address |
