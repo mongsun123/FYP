@@ -24,11 +24,13 @@ if ($item_id) {
     $stmt->fetch();
     $stmt->close();
 
-    if ($quantity >= 0) {
+    if ($quantity < 0) {
+        echo '1';
         // If item already exists in the inventory, update quantity
         $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + 1 WHERE user_id = ? AND item_id = ?");
         $stmt->bind_param("ii", $playerId, $item_id);
     } else {
+        echo '2';
         // If item does not exist, insert a new row
         $stmt = $conn->prepare("INSERT INTO inventory (user_id, item_id, quantity, acquired_at) VALUES (?, ?, 1, NOW())");
         $stmt->bind_param("ii", $playerId, $item_id);
