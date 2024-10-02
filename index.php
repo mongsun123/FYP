@@ -255,12 +255,9 @@ $stmt->close();
     let password_hash = <?php echo json_encode($password_hash); ?>;
     let created_at = <?php echo json_encode($created_at); ?>;
     
-
-
-    
     let temporaryAttack = attack; // Use temporary variable for attack power
-            let temporaryHp = playerHp; // Use temporary variable for attack power
-            let temporaryDefense = defense; // Use temporary variable for attack power
+    let temporaryHp = playerHp; // Use temporary variable for attack power
+    let temporaryDefense = defense; // Use temporary variable for attack power
     let inventory = []; // Initialize an empty inventory
 
     function changeMenu(menuName) {
@@ -336,16 +333,16 @@ $stmt->close();
                                 <label for="profile-id">ID: ${userId}</label><br>
 
                                 <label for="profile-username">Username: </label>
-                                <input type="text" id="profile-username" value="${username}"><br>
+                                <input type="text" id="profile-username" value="${username}" required><br>
 
                                 <label for="profile-email">Email: ${email}</label><br>
                                 <label for="profile-created-at">Created at: ${created_at}</label><br>
 
                                 <label for="old-password">Old Password: </label>
-                                <input type="password" id="old-password"><br>
+                                <input type="password" id="old-password" required><br>
 
                                 <label for="profile-password">New Password: </label>
-                                <input type="password" id="profile-password"><br>
+                                <input type="password" id="profile-password" required><br>
 
                                 <button type="button" id="save-profile">Save Changes</button>
                             </form>
@@ -969,20 +966,20 @@ $stmt->close();
 
     function loadInventory() {
         fetch('get_inventory.php')
-            .then(response => response.json())
-            .then(data => {
-                inventory = data; // Store fetched inventory data globally
-                const inventoryList = document.getElementById('inventory-list');
-                inventoryList.innerHTML = ''; // Clear the list
-            
-                data.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = `${item.item_name} (x${item.quantity})`;
-                    inventoryList.appendChild(li);
-                    
-                });
-            })  
-            .catch(error => console.error('Error fetching inventory:', error));
+        .then(response => response.json())
+        .then(data => {
+            inventory = data; // Store fetched inventory data globally
+            const inventoryList = document.getElementById('inventory-list');
+            inventoryList.innerHTML = ''; // Clear the list
+        
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.item_name} (x${item.quantity})`;
+                inventoryList.appendChild(li);
+                
+            });
+        })  
+        .catch(error => console.error('Error fetching inventory:', error));
     }
     
     // Call this function when the inventory menu is opened

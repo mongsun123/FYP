@@ -6,13 +6,8 @@ require 'vendor/autoload.php';
 
 use Sonata\GoogleAuthenticator\GoogleAuthenticator;
 use Sonata\GoogleAuthenticator\GoogleQrUrl;
-
 $ga = new GoogleAuthenticator();
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    //var_dump($_POST);
-    //var_dump($_SESSION);
-    
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $password = $_POST['password'];
@@ -77,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $error = "Something went wrong. Please try again.";
             }
         }
-
         $stmt->close();
     }
 
@@ -94,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $_SESSION['otp_secret'] = $secret;
     $user = 'Untitled'; // Replace this with the actual username or any unique identifier
     $qrCodeUrl = GoogleQrUrl::generate($user, $secret, 'Battle v0.1');
-    
 }
 ?>
 
@@ -306,18 +299,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             xhr.send(`email=${encodeURIComponent(email)}`);
         });
     });
-    function validatePassword() {
-        const passwordInput = document.querySelector('input[name="password"]');
-        const passwordRequirements = document.getElementById('password-requirements');
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-        
-        if (!passwordRegex.test(passwordInput.value)) {
-            passwordRequirements.style.display = 'block';
-        } else {
-            passwordRequirements.style.display = 'none';
-        }
-    }
-
     function checkUsername() {
         const usernameInput = document.querySelector('input[name="username"]');
         const usernameRequirements = document.getElementById('username-requirements');
@@ -327,6 +308,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             usernameRequirements.style.display = 'block';
         } else {
             usernameRequirements.style.display = 'none';
+        }
+    }
+    function validatePassword() {
+        const passwordInput = document.querySelector('input[name="password"]');
+        const passwordRequirements = document.getElementById('password-requirements');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        
+        if (!passwordRegex.test(passwordInput.value)) {
+            passwordRequirements.style.display = 'block';
+        } else {
+            passwordRequirements.style.display = 'none';
         }
     }
 </script>

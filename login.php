@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (password_verify($password, $user['password_hash'])) {
             $ga = new GoogleAuthenticator();
             $secret = $user['otp_secret'];
-            echo $ga->getCode($secret);
 
             // Verify the TOTP code
             if ($ga->checkCode($secret, $totp_code_input)) {
@@ -40,11 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         } else {
             // Incorrect password
-            $error = "Invalid username or password!";
+            $error = "Invalid password!";
         }
     } else {
         // User not found
-        $error = "Invalid username or password!";
+        $error = "Invalid username!";
     }
 }
 
@@ -52,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 if (isset($_GET['timeout']) && $_GET['timeout'] == 'true') {
     echo "<p style='color:red;'>Your session has expired due to inactivity. Please log in again.</p>";
 }
-
 ?>
 
 <style>
