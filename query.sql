@@ -10,7 +10,8 @@ CREATE TABLE user (
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    otp_secret VARCHAR(100)
+    otp_secret VARCHAR(100),
+    profile_pic VARCHAR(100)
 );
 
 CREATE TABLE item (
@@ -88,17 +89,24 @@ VALUES
     ('Ultimate Attack Potion', 'Increases attack by 25.', 'potion', 150, '25'),
     ('Ultimate Defense Potion', 'Increases defense by 25.', 'potion', 150, '25');
     
-select * from transactions;
+select * from inventory;
+
+UPDATE user
+SET email = "testing@gmail.com"
+WHERE id=2;
+
 DELETE FROM inventory WHERE id = 19;
 SELECT i.id, i.item_name, i.item_description, i.item_type, i.item_value, i.item_effect, inv.quantity
     FROM inventory inv
     JOIN item i ON inv.item_id = i.id
     WHERE inv.user_id = 1 AND inv.quantity > 0
     ORDER BY i.item_name;
+UPDATE user
+SET profile_pic = "profilePicture/profilePic"
+WHERE id = 1;
 
 DROP DATABASE fyp;
 INSERT INTO inventory (user_id, item_id, quantity)
 VALUES 
-    ('2', '4', 1),
-    ('1', '30', 1),
-    ('1', '24', 1);
+    ('1', '1', 1),
+    ('1', '2', 1);

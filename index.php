@@ -38,10 +38,10 @@ $expRequired = $level * 100;
 $_SESSION['last_activity'] = time();
 
 $email = '';
-$stmt = $conn->prepare("SELECT username, password_hash, email, created_at FROM user WHERE id = ?");
+$stmt = $conn->prepare("SELECT username, password_hash, email, created_at, profile_pic FROM user WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
-$stmt->bind_result($username, $password_hash, $email, $created_at);
+$stmt->bind_result($username, $password_hash, $email, $created_at, $profile_pic);
 $stmt->fetch();
 $stmt->close();
 
@@ -186,7 +186,14 @@ $stmt->close();
 <div class="ui-container">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <div class="top-section">
-        <div class="welcome-message">Welcome back, <?php echo $_SESSION['username']; ?>!</div>
+        <div class="welcome-message" style="display: flex; align-items: center; gap: 10px;">
+            <img 
+                src="<?php echo "profilePicture/",$profile_pic; ?>" 
+                alt="Profile Picture" 
+                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"
+            >
+            <span>Welcome back, <?php echo $_SESSION['username']; ?>!</span>
+        </div>
         <form action="logout.php" method="post">
             <button type="submit" class="logout-button">Logout</button>
         </form>
@@ -235,6 +242,7 @@ $stmt->close();
 
 <script>
     const playerId = <?php echo json_encode($_SESSION['user_id']); ?>;
+    const profile_pic = <?php echo json_encode($profile_pic); ?>;
 
     let enemyMaxHp;  // Maximum HP for easy level enemy
     let enemyHp;  // Current HP for easy level enemy
@@ -327,26 +335,69 @@ $stmt->close();
             });
         } else if (menuName === 'Profile') {
             document.getElementById('menu-title').textContent = menuName;
-            content = `<div id="profile-section">
-                            <h2 id="menu-title">Profile</h2>
-                            <form id="profile-form">
-                                <label for="profile-id">ID: ${userId}</label><br>
+            content = `
+                <h2 id="menu-title" margin-bottom: 20px;">Profile</h2>
+                <div id="profile-section" style="display: flex; align-items: flex-start; gap: 30px; padding: 20px; background-color: #f0f0f0; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+                    <!-- Profile Picture Section -->
+                    <div id="profile-picture-container" 
+                         style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: space-between; padding: 20px;">
 
-                                <label for="profile-username">Username: </label>
-                                <input type="text" id="profile-username" value="${username}" required><br>
+                        <!-- Profile Picture -->
+                        <img id="profile-img" src="profilePicture/${profile_pic}" alt="Profile Picture" 
+                             width="150" height="150" 
+                             style="border-radius: 50%; border: 3px solid #ff6f00; 
+                                    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);">
 
-                                <label for="profile-email">Email: ${email}</label><br>
-                                <label for="profile-created-at">Created at: ${created_at}</label><br>
+                        <!-- File Input -->
+                        <input type="file" id="profile-upload" accept=".jpg, .jpeg, .png" style="margin-top: 20px; margin-bottom: 20px;">
 
-                                <label for="old-password">Old Password: </label>
-                                <input type="password" id="old-password" required><br>
-
-                                <label for="profile-password">New Password: </label>
-                                <input type="password" id="profile-password" required><br>
-
-                                <button type="button" id="save-profile">Save Changes</button>
-                            </form>
-                        </div>`;
+                        <!-- Upload Button -->
+                        <button type="button" id="upload-btn" 
+                                style="margin-top: auto; background-color: #ff6f00; color: white; 
+                                       border: none; padding: 10px 20px; border-radius: 5px; 
+                                       cursor: pointer; transition: 0.3s;">
+                            Upload Picture
+                        </button>
+                    </div>
+                    
+                    <!-- Profile Form Section -->
+                    <form id="profile-form" style="flex-grow: 1;">
+                        <div style="margin-bottom: 15px;">
+                            <label for="profile-id" style="font-weight: bold;">ID: </label>
+                            <span>${userId}</span>
+                        </div>
+                    
+                        <div style="margin-bottom: 15px;">
+                            <label for="profile-username" style="font-weight: bold;">Username: </label><br>
+                            <input type="text" id="profile-username" value="${username}" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                    
+                        <div style="margin-bottom: 15px;">
+                            <label for="profile-email" style="font-weight: bold;">Email: </label><br>
+                            <span>${email}</span>
+                        </div>
+                    
+                        <div style="margin-bottom: 15px;">
+                            <label for="profile-created-at" style="font-weight: bold;">Created at: </label><br>
+                            <span>${created_at}</span>
+                        </div>
+                    
+                        <div style="margin-bottom: 15px;">
+                            <label for="old-password" style="font-weight: bold;">Old Password: </label><br>
+                            <input type="password" id="old-password" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                    
+                        <div style="margin-bottom: 15px;">
+                            <label for="profile-password" style="font-weight: bold;">New Password: </label><br>
+                            <input type="password" id="profile-password" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                    
+                        <button type="button" id="save-profile" style="background-color: #4caf50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; transition: 0.3s;">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            `;
         } else if (menuName === 'Inventory') {
             document.getElementById('menu-title').textContent = menuName;
             document.getElementById('battleBtn').style.display = 'none';
@@ -735,6 +786,36 @@ $stmt->close();
                 }
             })
             .catch(error => console.error('Error:', error));
+        }else if(event.target && event.target.id === 'upload-btn'){
+            const uploadInput = document.getElementById('profile-upload');
+            const file = uploadInput.files[0];
+
+            if (!file) {
+                alert('Please select a picture to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('profile-upload', file);
+            formData.append('userId', userId);
+
+            fetch('update_profile_picture.php', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Profile picture uploaded successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to upload picture: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
         }
     });
 

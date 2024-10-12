@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (password_verify($password, $user['password_hash'])) {
             $ga = new GoogleAuthenticator();
             $secret = $user['otp_secret'];
-
+            echo $ga->getCode($secret);
             // Verify the TOTP code
             if ($ga->checkCode($secret, $totp_code_input)) {
                 // Password and TOTP code are correct, create a session
