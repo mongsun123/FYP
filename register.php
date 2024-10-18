@@ -46,10 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             // Hash the password
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-        
+            $profile_pic = 'profilePic.jpg';
             // Insert the new user into the database
             $stmt = $conn->prepare("INSERT INTO user (username, email, password_hash, otp_secret, profile_pic) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $username, $email, $password_hash, $_SESSION['otp_secret'], 'profilePic.jpg');
+            $stmt->bind_param("sssss", $username, $email, $password_hash, $_SESSION['otp_secret'], $profile_pic);
         
             if ($stmt->execute()) {
                 // Get the last inserted user ID

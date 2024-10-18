@@ -16,7 +16,7 @@ $stmt = $conn->prepare("
     FROM inventory inv
     JOIN item i ON inv.item_id = i.id
     WHERE inv.user_id = ? AND inv.quantity > 0
-    ORDER BY i.item_name
+    ORDER BY i.id
 ");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();

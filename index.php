@@ -337,7 +337,7 @@ $stmt->close();
             document.getElementById('menu-title').textContent = menuName;
             content = `
                 <h2 id="menu-title" margin-bottom: 20px;">Profile</h2>
-                <div id="profile-section" style="display: flex; align-items: flex-start; gap: 30px; padding: 20px; background-color: #f0f0f0; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+                <div id="profile-section" style="display: flex; align-items: flex-start; gap: 30px; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
                     <!-- Profile Picture Section -->
                     <div id="profile-picture-container" 
                          style="display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: space-between; padding: 20px;">
